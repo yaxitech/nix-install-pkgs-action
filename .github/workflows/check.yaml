@@ -1,0 +1,21 @@
+name: 'Checks'
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    name: Run checks.
+    runs-on: [ self-hosted ]
+    env:
+      GC_DONT_GC: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+
+      - name: Run checks
+        run: |
+          nix flake check -L .
+

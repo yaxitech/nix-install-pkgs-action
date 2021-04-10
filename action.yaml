@@ -1,0 +1,15 @@
+name: 'Install Nix Profile'
+description: 'A GitHub Action to install an ephemeral Nix profile'
+inputs:
+  packages:
+    description: 'The packages you want to install'
+    required: true
+    default: "[]"
+outputs:
+  nix_profile_path:
+    description: 'Path to the Nix profile the requested packages were installed to'
+runs:
+  using: 'node12'
+  main: 'dist/main/index.js'
+  post: 'dist/post/index.js'
+

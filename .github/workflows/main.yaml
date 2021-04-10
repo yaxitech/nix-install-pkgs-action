@@ -1,0 +1,39 @@
+name: 'CI'
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    name: Run our Action
+    runs-on: [ self-hosted ]
+    env:
+      GC_DONT_GC: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+
+      - name: Run Action
+        uses: ./
+        with:
+          packages: 'hello'
+
+      - name: Run hello
+        run: |
+          hello
+
+      - name: Run Action
+        uses: ./
+        with:
+          packages: 'nixpkgs#figlet'
+
+      - name: List installed packages
+        run:
+          nix profile list --profile "$STATE_NIX_PROFILE_TMPDIR"/.nix-profile
+
+      - name: Run figlet
+        run: |
+          figlet WURZELPFROPF
+
