@@ -12,6 +12,7 @@
       let
         pkgs = import nixpkgs { inherit system; };
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
+        nodeEnv = import ./node-env { inherit pkgs; };
       in
       {
         checks.nixpkgs-fmt = pkgs.runCommand "check-nix-format" { } ''
@@ -19,9 +20,8 @@
           mkdir $out #sucess
         '';
 
-        # TODO: use `prettier` from package.json
         checks.prettier = pkgs.runCommand "check-ts-format" { } ''
-          ${pkgs.nodePackages.prettier}/bin/prettier --check ${./.}/src/*.ts
+          ${nodeEnv.nodeDependencies}/bin/prettier --check ${./.}/src/*.ts
           mkdir $out # success
         '';
 
@@ -30,7 +30,9 @@
 
           buildInputs = with pkgs; [
             fish
-            nodejs-12_x
+            nodejs
+            nodePackages.node2nix
+            nodeEnv.nodeDependencies
           ];
 
           shellHook = ''
