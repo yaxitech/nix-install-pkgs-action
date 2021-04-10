@@ -14,20 +14,16 @@
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
       in
       {
-        checks.format = pkgs.stdenv.mkDerivation {
-          name = "check-format";
+        checks.nixpkgs-fmt = pkgs.runCommand "check-nix-format" { } ''
+          ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt --check ${./.}
+          mkdir $out #sucess
+        '';
 
-          src = ./.;
-
-          # TODO: use `prettier` from package.json
-          buildInputs = [ pkgs.nodePackages.prettier ];
-
-          buildPhase = ''
-            prettier --check **/*.ts && mkdir $out
-          '';
-
-          dontInstall = true;
-        };
+        # TODO: use `prettier` from package.json
+        checks.prettier = pkgs.runCommand "check-ts-format" { } ''
+          ${pkgs.nodePackages.prettier}/bin/prettier --check ${./.}/src/*.ts
+          mkdir $out # success
+        '';
 
         devShell = pkgs.mkShell {
           name = "${packageJson.name}-shell";
