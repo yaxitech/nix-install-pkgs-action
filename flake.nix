@@ -12,7 +12,8 @@
       let
         pkgs = import nixpkgs { inherit system; };
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
-        nodeEnv = import ./node-env { inherit pkgs; };
+        nodejs = pkgs.nodejs-12_x;
+        nodeEnv = import ./node-env { inherit pkgs nodejs; };
       in
       {
         checks.nixpkgs-fmt = pkgs.runCommand "check-nix-format" { } ''
@@ -24,6 +25,30 @@
           ${nodeEnv.nodeDependencies}/bin/prettier --check ${./.}/src/*.ts
           mkdir $out # success
         '';
+
+        defaultPackage = pkgs.stdenv.mkDerivation {
+          name = packageJson.name;
+
+          buildInputs = [
+            nodejs
+            nodeEnv.nodeDependencies
+          ];
+
+          src = ./.;
+
+          buildPhase = ''
+            HOME=.
+
+            ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules
+
+            npm run build
+
+            mkdir -p $out/lib
+            cp -r dist/ $out/lib/
+          '';
+
+          dontInstall = true;
+        };
 
         devShell = pkgs.mkShell {
           name = "${packageJson.name}-shell";
