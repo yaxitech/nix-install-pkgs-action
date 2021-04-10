@@ -37,3 +37,22 @@ jobs:
         run: |
           figlet WURZELPFROPF
 
+  build:
+    name: Build bundled action
+    if: github.event_name == 'push'
+    runs-on: [ self-hosted, default ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+
+      - name: Install job dependencies
+        uses: ./
+        with:
+          packages: 'python3, python3Packages.GitPython, python3Packages.gitdb, python3Packages.smmap'
+
+      - name: Build action
+        run: |
+          python .github/steps/build_action.py
