@@ -55,6 +55,22 @@
           dontInstall = true;
         };
 
+        apps = {
+          refresh-node-env = flake-utils.lib.mkApp {
+            drv = (pkgs.writeShellScriptBin "refresh-node-env" ''
+              ${pkgs.nodePackages.node2nix}/bin/node2nix \
+                --development \
+                --input package.json \
+                --lock package-lock.json \
+                --node-env node-env/node-env.nix \
+                --output node-env/node-packages.nix \
+                --composition node-env/default.nix \
+                --nodejs-12
+              ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt node-env
+            '');
+          };
+        };
+
         devShell = pkgs.mkShell {
           name = "${packageJson.name}-shell";
 
