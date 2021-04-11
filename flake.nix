@@ -16,6 +16,11 @@
         nodeEnv = import ./node-env { inherit pkgs nodejs; };
       in
       {
+        checks.black = pkgs.runCommand "check-py-format" { } ''
+          ${pkgs.python3Packages.black}/bin/black --check ${./.}
+          mkdir $out # success
+        '';
+
         checks.nixpkgs-fmt = pkgs.runCommand "check-nix-format" { } ''
           ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt --check ${./.}
           mkdir $out #sucess
