@@ -15,7 +15,16 @@ jobs:
           # Nix Flakes doesn't work on shallow clones
           fetch-depth: 0
 
+      - name: Check that node-env is up-to-date
+        run: |
+          nix run '.#update-package-lock'
+          nix run '.#refresh-node-env'
+          [[ -z $(git status -s) ]] || ( \
+            echo "Changed package.json or package-lock.json.";
+            echo "Please run 'nix run .#update-package-lock' and 'nix run .#refresh-node-env'."; \
+            exit 1 \
+          )
+
       - name: Run checks
         run: |
           nix flake check -L .
-
