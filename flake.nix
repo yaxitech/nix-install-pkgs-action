@@ -69,6 +69,12 @@
               ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt node-env
             '');
           };
+
+          update-package-lock = flake-utils.lib.mkApp {
+            drv = (pkgs.writeShellScriptBin "update-package-lock" ''
+              ${nodejs}/bin/npm install --package-lock-only
+            '');
+          };
         };
 
         devShell = pkgs.mkShell {
