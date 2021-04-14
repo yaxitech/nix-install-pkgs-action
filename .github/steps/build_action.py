@@ -10,9 +10,19 @@ import subprocess
 import git
 
 
+GIT_USER_NAME = "github-actions"
+GIT_EMAIL = "actions@taxi.tech"
+
+
 def main():
     with open(os.environ["GITHUB_EVENT_PATH"]) as input_file:
         event_data = json.load(input_file)
+
+    if event_data["ref"].startswith("refs/heads/"):
+        branch_name = event_data["ref"][len("refs/heads/") :]
+    else:
+        branch_name = None
+
     commits = event_data["commits"]
     if not commits:
         print("No commits, nothing to do")
@@ -22,7 +32,7 @@ def main():
 
     last_commit = repo.commit(commits[-1]["id"])
     for diff in last_commit.diff(commits[0]["id"] + "~"):
-        if diff.a_path.startswith("src/"):
+        if (diff.a_path or diff.b_path).startswith("src/"):
             break
     else:
         print("Source wasn't changed, nothing to do")
@@ -41,11 +51,29 @@ def main():
             path = os.path.join(root, name)
             os.chmod(path, 0o644)
 
-    repo.git.config("user.name", "github-actions")
-    repo.git.config("user.email", "actions@yaxi.tech")
+    if not repo.git.status("-s"):
+        print("No changes to commit")
+        return
+    elif branch_name is None:
+        print("Not in a branch, but there are source changes. This is unexpected.")
+        raise SystemExit(1)
 
-    repo.git.commit("-a", "-m", "Rebuild bundled action from source")
-    repo.git.push()
+    repo.git.config("user.name", GIT_USER_NAME)
+    repo.git.config("user.email", GIT_EMAIL)
+
+    extra_commit_args = []
+    extra_push_args = []
+    if (
+        branch_name != "main"
+        and last_commit.author.name == GIT_USER_NAME
+        and last_commit.author.email == GIT_EMAIL
+    ):
+        extra_commit_args.append("--amend")
+        extra_push_args.append("-f")
+    repo.git.commit(
+        "-a", "-m", "Rebuild bundled action from source", *extra_commit_args
+    )
+    repo.git.push(*extra_push_args)
 
 
 main()
