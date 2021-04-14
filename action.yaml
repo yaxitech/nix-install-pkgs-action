@@ -5,6 +5,9 @@ inputs:
     description: 'The packages you want to install'
     required: true
     default: "[]"
+  expr:
+    description: 'Install the given Nix expression into the profile.'
+    required: false
 outputs:
   nix_profile_path:
     description: 'Path to the Nix profile the requested packages were installed to'

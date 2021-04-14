@@ -51,7 +51,7 @@ jobs:
       - name: Install job dependencies
         uses: ./
         with:
-          packages: 'python3, python3Packages.GitPython, python3Packages.gitdb, python3Packages.smmap'
+          expr: 'pkgs.python3.withPackages (ps: [ps.GitPython])'
 
       - name: Build action
         run: |

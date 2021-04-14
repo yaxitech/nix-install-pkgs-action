@@ -42,6 +42,41 @@ const os_1 = __nccwpck_require__(87);
 const path = __importStar(__nccwpck_require__(622));
 const util_1 = __nccwpck_require__(669);
 const mkdtempAsync = util_1.promisify(fs_1.mkdtemp);
+function runNix(args) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let output = "";
+        const options = {
+            listeners: {
+                stdout: (data) => {
+                    output += data.toString();
+                },
+            },
+        };
+        const exitCode = yield exec_1.exec("nix", args, options);
+        if (exitCode != 0) {
+            throw "nix exited with non-zeror exit status: ${exitCode}";
+        }
+        return output;
+    });
+}
+function determineNixpkgsExprFromFlake() {
+    var _a, _b, _c;
+    return __awaiter(this, void 0, void 0, function* () {
+        const flake = JSON.parse(yield runNix(["flake", "metadata", "--json"]));
+        const nixpkgs = (_c = (_b = (_a = flake.locks) === null || _a === void 0 ? void 0 : _a.nodes) === null || _b === void 0 ? void 0 : _b.nixpkgs) === null || _c === void 0 ? void 0 : _c.locked;
+        if (!nixpkgs) {
+            throw "Could not find nixpkgs input. You need to provide a (locked) input called nixpkgs.";
+        }
+        const flakeRef = `github:${nixpkgs.owner}/${nixpkgs.repo}/${nixpkgs.rev}`;
+        const system = yield runNix([
+            "eval",
+            "--impure",
+            "--expr",
+            "builtins.currentSystem",
+        ]);
+        return `(import (builtins.getFlake("${flakeRef}")) { system = ${system}; })`;
+    });
+}
 function maybeAddNixpkgs(pkg) {
     if (pkg.indexOf("#") < 0) {
         return "nixpkgs#" + pkg;
@@ -63,13 +98,27 @@ function main() {
             .split(",")
             .map((str) => str.trim())
             .map(maybeAddNixpkgs);
-        yield exec_1.exec("nix", [
-            "profile",
-            "install",
-            "--profile",
-            nixProfileDir,
-            ...packages,
-        ]);
+        const expr = core.getInput("expr");
+        if (expr) {
+            const nixpkgs = yield determineNixpkgsExprFromFlake();
+            yield exec_1.exec("nix", [
+                "profile",
+                "install",
+                "--profile",
+                nixProfileDir,
+                "--expr",
+                `let pkgs = ${nixpkgs}; in ${expr}`,
+            ]);
+        }
+        else {
+            yield exec_1.exec("nix", [
+                "profile",
+                "install",
+                "--profile",
+                nixProfileDir,
+                ...packages,
+            ]);
+        }
         core.addPath(path.join(nixProfileDir, "bin"));
         // Export the temporary directory to remove it in the post action of the
         // workflow
