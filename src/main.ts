@@ -1,13 +1,18 @@
 import * as core from "@actions/core";
 import { exec } from "@actions/exec";
-import { mkdtemp } from "fs";
+import { mkdtemp, readFile } from "fs";
 import { tmpdir } from "os";
 import * as path from "path";
 import { promisify } from "util";
 
 const mkdtempAsync = promisify(mkdtemp);
+const readFileAsync = promisify(readFile);
 
 async function runNix(args: string[]): Promise<string> {
+  return runCmd("nix", args);
+}
+
+async function runCmd(cmd: string, args: string[]): Promise<string> {
   let output = "";
 
   const options = {
@@ -17,7 +22,7 @@ async function runNix(args: string[]): Promise<string> {
       },
     },
   };
-  const exitCode = await exec("nix", args, options);
+  const exitCode = await exec(cmd, args, options);
   if (exitCode != 0) {
     throw "nix exited with non-zeror exit status: ${exitCode}";
   }
@@ -25,20 +30,16 @@ async function runNix(args: string[]): Promise<string> {
   return output;
 }
 
-async function determineNixpkgsExprFromFlake() {
-  const flake = JSON.parse(await runNix(["flake", "metadata", "--json"]));
-  const nixpkgs = flake.locks?.nodes?.nixpkgs?.locked;
-  if (!nixpkgs) {
-    throw "Could not find nixpkgs input. You need to provide a (locked) input called nixpkgs.";
-  }
-  const flakeRef = `github:${nixpkgs.owner}/${nixpkgs.repo}/${nixpkgs.rev}`;
-  const system = await runNix([
-    "eval",
-    "--impure",
-    "--expr",
-    "builtins.currentSystem",
-  ]);
-  return `(import (builtins.getFlake("${flakeRef}")) { system = ${system}; })`;
+async function determineSystem(): Promise<string> {
+  return runNix(["eval", "--impure", "--expr", "builtins.currentSystem"]);
+}
+
+async function getRepoFlake(): Promise<string> {
+  const eventData = await readFileAsync(
+    process.env.GITHUB_EVENT_PATH as string
+  );
+  const rev = JSON.parse(eventData.toString()).after;
+  return `builtins.getFlake("git+file://" + (toString ./.) + "?rev=${rev}")`;
 }
 
 function maybeAddNixpkgs(pkg: string) {
@@ -66,14 +67,18 @@ async function main() {
 
   const expr = core.getInput("expr");
   if (expr) {
-    const nixpkgs = await determineNixpkgsExprFromFlake();
+    const system = await determineSystem();
+    const repoFlake = await getRepoFlake();
     await exec("nix", [
       "profile",
       "install",
       "--profile",
       nixProfileDir,
       "--expr",
-      `let pkgs = ${nixpkgs}; in ${expr}`,
+      `let
+         repoFlake = ${repoFlake};
+         pkgs = (import repoFlake.inputs.nixpkgs { system = ${system}; });
+       in ${expr}`,
     ]);
   } else {
     await exec("nix", [
