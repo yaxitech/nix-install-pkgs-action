@@ -11,11 +11,13 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+        lib = pkgs.lib;
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
         nodejs = pkgs.nodejs-12_x;
         nodeEnv = import ./node-env { inherit pkgs nodejs; };
         pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
       in
+      with lib;
       {
         checks.black = pkgs.runCommand "check-py-format" { buildInputs = [ pythonEnv ]; } ''
           black --check ${./.}
@@ -33,9 +35,29 @@
           mkdir $out #sucess
         '';
 
-        checks.prettier = pkgs.runCommand "check-ts-format" { } ''
-          ${nodeEnv.nodeDependencies}/bin/prettier --check ${./.}/src/*.ts
-          mkdir $out # success
+        checks.prettier =
+          let
+            checkFormatCommand = packageJson.scripts.check-format;
+            buildInputs = self.defaultPackage.${system}.buildInputs;
+          in
+          pkgs.runCommand "check-ts-format" { inherit buildInputs; } ''
+            cd ${./.}
+            ${checkFormatCommand}
+            mkdir $out # success
+          '';
+
+        checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
+          flakeDescription=${escapeShellArg (import ./flake.nix).description}
+          packageDescription=${escapeShellArg packageJson.description}
+          actionDescription="$(yq -r '.description' ${./action.yaml})"
+          if [[ "$flakeDescription" == "$packageDescription" && "$flakeDescription" == "$actionDescription" ]]; then
+            mkdir $out # success
+          else
+            echo 'The descriptions given in flake.nix, package.json and action.yaml do not match'
+            exit 1
+          fi
+
+          echo 'All metadata checks completed successfully'
         '';
 
         defaultPackage = pkgs.stdenv.mkDerivation {
