@@ -46,13 +46,14 @@
             mkdir $out # success
           '';
 
-        checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ nixFlakes jq ]; } ''
+        checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
           flakeDescription=${escapeShellArg (import ./flake.nix).description}
           packageDescription=${escapeShellArg packageJson.description}
-          if [[ "$flakeDescription" == "$packageDescription" ]]; then
+          actionDescription="$(yq -r '.description' ${./action.yaml})"
+          if [[ "$flakeDescription" == "$packageDescription" && "$flakeDescription" == "$actionDescription" ]]; then
             mkdir $out # success
           else
-            echo 'The description given in flake.nix does not match the description given in package.json'
+            echo 'The descriptions given in flake.nix, package.json and action.yaml do not match'
             exit 1
           fi
 
