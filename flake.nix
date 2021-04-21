@@ -14,10 +14,17 @@
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
         nodejs = pkgs.nodejs-12_x;
         nodeEnv = import ./node-env { inherit pkgs nodejs; };
+        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
       in
       {
-        checks.black = pkgs.runCommand "check-py-format" { } ''
-          ${pkgs.python3Packages.black}/bin/black --check ${./.}
+        checks.black = pkgs.runCommand "check-py-format" { buildInputs = [ pythonEnv ]; } ''
+          black --check ${./.}
+          mkdir $out # success
+        '';
+
+        checks.mypy = pkgs.runCommand "check-py-types" { buildInputs = [ pythonEnv ]; } ''
+          # mypy doesn't recurse into hidden directories
+          mypy "$(find ${./.} -type f -name '*.py')"
           mkdir $out # success
         '';
 
@@ -82,9 +89,10 @@
 
           buildInputs = with pkgs; [
             fish
-            nodejs
-            nodePackages.node2nix
             nodeEnv.nodeDependencies
+            nodePackages.node2nix
+            nodejs
+            pythonEnv
           ];
 
           shellHook = ''

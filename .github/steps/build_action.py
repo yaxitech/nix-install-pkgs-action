@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 
-import git
+import git  # type: ignore
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
 
     repo = git.Repo(".")
 
-    last_commit = repo.commit(commits[-1]["id"])
+    last_commit: git.Commit = repo.commit(commits[-1]["id"])
     for diff in last_commit.diff(commits[0]["id"] + "~"):
         if diff.a_path.startswith("src/"):
             break
