@@ -44,6 +44,18 @@
             mkdir $out # success
           '';
 
+        checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ nixFlakes jq ]; } ''
+          cd ${./.}
+          flakeDescription="$(nix --experimental-features 'nix-command flakes' flake metadata --json | jq '.description')"
+          packageDescription="$(jq '.description' ./package.json)"
+          if [[ "$flakeDescription" == "$packageDescription" ]]; then
+            mkdir $out # success
+          else
+            echo 'The description given in flake.nix does not match the description given in package.json'
+            exit 1
+          fi
+        '';
+
         defaultPackage = pkgs.stdenv.mkDerivation {
           name = packageJson.name;
 
