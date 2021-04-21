@@ -31,7 +31,13 @@ async function runCmd(cmd: string, args: string[]): Promise<string> {
 }
 
 async function determineSystem(): Promise<string> {
-  return runNix(["eval", "--impure", "--expr", "builtins.currentSystem"]);
+  return runNix([
+    "eval",
+    "--impure",
+    "--json",
+    "--expr",
+    "builtins.currentSystem",
+  ]).then((output) => JSON.parse(output));
 }
 
 async function getRepoFlake(): Promise<string> {
@@ -77,7 +83,7 @@ async function main() {
       "--expr",
       `let
          repoFlake = ${repoFlake};
-         pkgs = (import repoFlake.inputs.nixpkgs { system = ${system}; });
+         pkgs = (import repoFlake.inputs.nixpkgs { system = "${system}"; });
        in ${expr}`,
     ]);
   } else {
