@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc && ncc build -o dist/main lib/main.js && ncc build -o dist/post lib/post.js",
     "format": "prettier --write **/*.ts",
-    "check-format": "prettier --check **/*.ts"
+    "check-format": "prettier --check **/*.ts",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -26,9 +27,12 @@
     "@actions/github": "^4.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.22",
     "@types/node": "^14.14.37",
     "@vercel/ncc": "^0.28.2",
+    "jest": "^26.6.3",
     "prettier": "^2.2.1",
+    "ts-jest": "^26.5.5",
     "typescript": "^4.2.4"
   }
 }

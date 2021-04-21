@@ -46,6 +46,17 @@
             mkdir $out # success
           '';
 
+        checks.jest =
+          let
+            testCommand = packageJson.scripts.test;
+            buildInputs = self.defaultPackage.${system}.buildInputs;
+          in
+          pkgs.runCommand "check-jest" { inherit buildInputs; } ''
+            cd ${./.}
+            ${testCommand}
+            mkdir $out # success
+          '';
+
         checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
           flakeDescription=${escapeShellArg (import ./flake.nix).description}
           packageDescription=${escapeShellArg packageJson.description}
