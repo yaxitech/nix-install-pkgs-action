@@ -33,10 +33,16 @@
           mkdir $out #sucess
         '';
 
-        checks.prettier = pkgs.runCommand "check-ts-format" { } ''
-          ${nodeEnv.nodeDependencies}/bin/prettier --check ${./.}/src/*.ts
-          mkdir $out # success
-        '';
+        checks.prettier =
+          let
+            checkFormatCommand = packageJson.scripts.check-format;
+            buildInputs = self.defaultPackage.${system}.buildInputs;
+          in
+          pkgs.runCommand "check-ts-format" { inherit buildInputs; } ''
+            cd ${./.}
+            ${checkFormatCommand}
+            mkdir $out # success
+          '';
 
         defaultPackage = pkgs.stdenv.mkDerivation {
           name = packageJson.name;
