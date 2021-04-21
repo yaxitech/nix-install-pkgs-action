@@ -43,7 +43,9 @@ jobs:
 
 On some occasions, you need to compose a custom derivation from a Nix expression, for example,
 to install Python 3 with specific packages. This can be done with the `expr` input.
-The action evaluates the passed string through `nix profile install --expr`. Within your expression, `nixpkgs` from the checked out repository's flake is available as `pkgs`. Example:
+The action evaluates the passed string through `nix profile install --expr`.
+Within your expression, `nixpkgs` from the checked out repository's flake is available as `pkgs`,
+while the repository's flake itself is available as `repoFlake`. Example:
 
 ```yaml
 name: 'nix-profile-action expr'
