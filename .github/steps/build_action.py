@@ -11,7 +11,7 @@ import git
 
 
 GIT_USER_NAME = "github-actions"
-GIT_EMAIL = "actions@taxi.tech"
+GIT_EMAIL = "actions@yaxi.tech"
 
 
 def main():
