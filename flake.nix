@@ -45,26 +45,6 @@
             mkdir $out # success
           '';
 
-        checks.jest = pkgs.stdenv.mkDerivation {
-          name = "check-jest";
-          src = ./.;
-
-          buildInputs = self.defaultPackage.${system}.buildInputs ++ [ pkgs.nixFlakes ];
-
-          NIX_CONFIG = "experimental-features = nix-command flakes";
-
-          dontBuild = true;
-
-          # Setting NODE_PATH isn't enough as it is not respected by all dependencies
-          # See node2nix README for further details
-          configurePhase = "ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules";
-
-          doCheck = true;
-          checkPhase = "${packageJson.scripts.test}";
-
-          installPhase = "mkdir $out";
-        };
-
         checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
           flakeDescription=${escapeShellArg (import ./flake.nix).description}
           packageDescription=${escapeShellArg packageJson.description}
@@ -95,12 +75,19 @@
             ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules
 
             npm run build
-
-            mkdir -p $out/lib
-            cp -r dist/ $out/lib/
           '';
 
-          dontInstall = true;
+          doCheck = true;
+          checkInputs = [ pkgs.nixFlakes ];
+          checkPhase = ''
+            export NIX_CONFIG="experimental-features = nix-command flakes";
+            npm run test
+          '';
+
+          installPhase = ''
+            mkdir -p     $out/lib/
+            cp -r dist/. $out/lib/
+          '';
         };
 
         apps = {
