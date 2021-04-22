@@ -16,7 +16,7 @@ async function runCmd(cmd: string, args: string[]): Promise<string> {
   };
   const exitCode = await exec(cmd, args, options);
   if (exitCode != 0) {
-    throw "nix exited with non-zero status: ${exitCode}";
+    throw `nix exited with non-zero status: ${exitCode}`;
   }
 
   return output;
