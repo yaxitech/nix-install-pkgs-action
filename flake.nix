@@ -11,13 +11,12 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        lib = pkgs.lib;
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
         nodejs = pkgs.nodejs-12_x;
-        nodeEnv = import ./node-env { inherit pkgs nodejs; };
+        nodeEnv = pkgs.callPackage ./node-env { inherit nodejs; };
         pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
       in
-      with lib;
+      with pkgs.lib;
       {
         checks.black = pkgs.runCommand "check-py-format" { buildInputs = [ pythonEnv ]; } ''
           black --check ${./.}
