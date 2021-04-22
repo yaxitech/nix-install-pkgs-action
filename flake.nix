@@ -45,16 +45,23 @@
             mkdir $out # success
           '';
 
-        checks.jest =
-          let
-            testCommand = packageJson.scripts.test;
-            buildInputs = self.defaultPackage.${system}.buildInputs;
-          in
-          pkgs.runCommand "check-jest" { inherit buildInputs; } ''
-            cd ${./.}
-            ${testCommand}
-            mkdir $out # success
-          '';
+        checks.jest = pkgs.stdenv.mkDerivation {
+          name = "check-jest";
+          src = ./.;
+
+          buildInputs = self.defaultPackage.${system}.buildInputs ++ [ pkgs.nixFlakes ];
+
+          NIX_CONFIG = "experimental-features = nix-command flakes";
+
+          dontBuild = true;
+
+          configurePhase = "ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules";
+
+          doCheck = true;
+          checkPhase = "${packageJson.scripts.test}";
+
+          installPhase = "mkdir $out";
+        };
 
         checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
           flakeDescription=${escapeShellArg (import ./flake.nix).description}
