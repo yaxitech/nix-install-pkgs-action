@@ -55,6 +55,8 @@
 
           dontBuild = true;
 
+          # Setting NODE_PATH isn't enough as it is not respected by all dependencies
+          # See node2nix README for further details
           configurePhase = "ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules";
 
           doCheck = true;
