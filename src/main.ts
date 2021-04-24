@@ -5,40 +5,10 @@ import { tmpdir } from "os";
 import * as path from "path";
 import { promisify } from "util";
 
+import { determineSystem, runNix } from "./nix";
+
 const mkdtempAsync = promisify(mkdtemp);
 const readFileAsync = promisify(readFile);
-
-async function runNix(args: string[]): Promise<string> {
-  return runCmd("nix", args);
-}
-
-async function runCmd(cmd: string, args: string[]): Promise<string> {
-  let output = "";
-
-  const options = {
-    listeners: {
-      stdout: (data: Buffer) => {
-        output += data.toString();
-      },
-    },
-  };
-  const exitCode = await exec(cmd, args, options);
-  if (exitCode != 0) {
-    throw "nix exited with non-zero status: ${exitCode}";
-  }
-
-  return output;
-}
-
-async function determineSystem(): Promise<string> {
-  return runNix([
-    "eval",
-    "--impure",
-    "--json",
-    "--expr",
-    "builtins.currentSystem",
-  ]).then((output) => JSON.parse(output));
-}
 
 async function getRepoFlake(): Promise<string> {
   const eventData = await readFileAsync(
@@ -106,3 +76,5 @@ async function main() {
 main().catch((error) =>
   core.setFailed("Workflow run failed: " + error.message)
 );
+
+export default main;

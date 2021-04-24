@@ -11,13 +11,12 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        lib = pkgs.lib;
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
         nodejs = pkgs.nodejs-12_x;
-        nodeEnv = import ./node-env { inherit pkgs nodejs; };
+        nodeEnv = pkgs.callPackage ./node-env { inherit nodejs; };
         pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
       in
-      with lib;
+      with pkgs.lib;
       {
         checks.black = pkgs.runCommand "check-py-format" { buildInputs = [ pythonEnv ]; } ''
           black --check ${./.}
@@ -76,12 +75,21 @@
             ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules
 
             npm run build
-
-            mkdir -p $out/lib
-            cp -r dist/ $out/lib/
           '';
 
-          dontInstall = true;
+          doCheck = true;
+          checkInputs = [ pkgs.nixFlakes ];
+          checkPhase = ''
+            export NIX_CONFIG="experimental-features = nix-command flakes";
+            npm run test
+          '';
+
+          installPhase = ''
+            mkdir -p     $out/lib/
+            cp -r dist/. $out/lib/
+          '';
+
+          requiredSystemFeatures = [ "recursive-nix" ];
         };
 
         apps = {
