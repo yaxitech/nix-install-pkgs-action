@@ -39,7 +39,7 @@ def main():
         return
 
     subprocess.run(["nix", "build"])
-    shutil.copytree("result/lib/dist", "dist", dirs_exist_ok=True)
+    shutil.copytree("result/lib/", "dist", dirs_exist_ok=True)
 
     # Files in the Nix store are read-only and the checkout action then fails
     # to clean up afterwards. Help a bit by making the copied files writable.
