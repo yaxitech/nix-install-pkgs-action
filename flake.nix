@@ -88,6 +88,8 @@
             mkdir -p     $out/lib/
             cp -r dist/. $out/lib/
           '';
+
+          requiredSystemFeatures = [ "recursive-nix" ];
         };
 
         apps = {
