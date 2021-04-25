@@ -56,3 +56,50 @@ jobs:
       - name: Build action
         run: |
           python .github/steps/build_action.py
+
+  coverage:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, default ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+
+      - name: Run tests with coverage
+        run: |
+          nix develop -c npm install
+          nix develop -c npm run coverage
+
+      - name: Install job dependencies
+        if: github.ref == 'refs/heads/main'
+        uses: ./
+        with:
+          expr: |
+            pkgs.python3.withPackages (ps: with ps; [
+              (buildPythonPackage rec {
+                pname = "ghp-import";
+                version = "1.1.0";
+
+                src = fetchPypi {
+                  inherit pname version;
+                  sha256 = "wiqc4Qw3dT4miNFk12WnANrkuNefptsKLDEyuniBiU8=";
+                };
+
+                propagatedBuildInputs = [
+                  dateutil
+                ];
+
+                meta = {
+                  homepage = "https://github.com/c-w/ghp-import";
+                  description = "Copy your docs directly to the gh-pages branch.";
+                  license = pkgs.lib.licenses.apsl20;
+                };
+              })
+            ])
+
+      - name: Push badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          python .github/steps/push_badge.py

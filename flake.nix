@@ -25,7 +25,7 @@
 
         checks.mypy = pkgs.runCommand "check-py-types" { buildInputs = [ pythonEnv ]; } ''
           # mypy doesn't recurse into hidden directories
-          mypy "$(find ${./.} -type f -name '*.py')"
+          mypy ${./.github}
           mkdir $out # success
         '';
 
@@ -124,10 +124,6 @@
             nodejs
             pythonEnv
           ];
-
-          shellHook = ''
-            exec fish
-          '';
         };
       });
 }
