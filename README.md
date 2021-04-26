@@ -75,12 +75,14 @@ This action requires a Flake-enabled Nix with support for
 ### NixOS
 
 ```nix
-nix = {
-  package = pkgs.nixFlakes;
-  extraOptions = ''
-    experimental-features = nix-command flakes ca-references
-  '';
-};
+{
+  nix = {
+    package = pkgs.nixFlakes;
+    extraOptions = ''
+      experimental-features = nix-command flakes ca-references
+    '';
+  };
+}
 ```
 
 ### Non-NixOS
@@ -106,10 +108,12 @@ that has the `recursive-nix` feature enabled is required. You can put the
 following snippet into your `configuration.nix`:
 
 ```nix
-nix = {
-    extraOptions = ''
-      experimental-features = nix-command flakes recursive-nix
-   ''
-    systemFeatures = [ "recursive-nix" ];
+{
+  nix = {
+      extraOptions = ''
+        experimental-features = nix-command flakes recursive-nix
+     ''
+      systemFeatures = [ "recursive-nix" ];
+  };
 }
 ```
