@@ -110,10 +110,10 @@ following snippet into your `configuration.nix`:
 ```nix
 {
   nix = {
-      extraOptions = ''
-        experimental-features = nix-command flakes recursive-nix
-     ''
-      systemFeatures = [ "recursive-nix" ];
+    extraOptions = ''
+      experimental-features = nix-command flakes recursive-nix
+    '';
+    systemFeatures = [ "recursive-nix" ];
   };
 }
 ```
