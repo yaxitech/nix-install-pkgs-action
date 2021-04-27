@@ -59,7 +59,7 @@ def main():
         total_coverage = coverage_data["total"]["lines"]["pct"]
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        with open(os.path.join(tmp_dir, "coverage.xml"), "w") as badge_file:
+        with open(os.path.join(tmp_dir, "coverage.svg"), "w") as badge_file:
             color = list(COLORS.values())[
                 bisect(list(COLORS.keys()), total_coverage) - 1
             ]
