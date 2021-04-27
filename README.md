@@ -1,5 +1,7 @@
 # nix-profile-action
 
+![Coverage](https://github.com/yaxitech/nix-profile-action/blob/gh-pages/coverage.svg)
+
 A GitHub Action to install [Nix][nixos] packages into an ephemeral profile.
 
 The action is particularly useful if you use a self-hosted [GitHub Actions Runner
