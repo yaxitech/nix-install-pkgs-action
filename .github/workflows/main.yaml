@@ -59,7 +59,7 @@ jobs:
 
   coverage:
     if: github.event_name == 'push'
-    runs-on: [self-hosted, default ]
+    runs-on: [ self-hosted, default ]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
