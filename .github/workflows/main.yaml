@@ -77,27 +77,7 @@ jobs:
         uses: ./
         with:
           expr: |
-            pkgs.python3.withPackages (ps: with ps; [
-              (buildPythonPackage rec {
-                pname = "ghp-import";
-                version = "1.1.0";
-
-                src = fetchPypi {
-                  inherit pname version;
-                  sha256 = "wiqc4Qw3dT4miNFk12WnANrkuNefptsKLDEyuniBiU8=";
-                };
-
-                propagatedBuildInputs = [
-                  dateutil
-                ];
-
-                meta = {
-                  homepage = "https://github.com/c-w/ghp-import";
-                  description = "Copy your docs directly to the gh-pages branch.";
-                  license = pkgs.lib.licenses.apsl20;
-                };
-              })
-            ])
+            pkgs.python3.withPackages (ps: with ps; [ ghp-import ])
 
       - name: Push badge
         if: github.ref == 'refs/heads/main'
