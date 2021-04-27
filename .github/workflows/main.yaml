@@ -56,3 +56,30 @@ jobs:
       - name: Build action
         run: |
           python .github/steps/build_action.py
+
+  coverage:
+    if: github.event_name == 'push'
+    runs-on: [ self-hosted, default ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+
+      - name: Run tests with coverage
+        run: |
+          nix develop -c npm install
+          nix develop -c npm run coverage
+
+      - name: Install job dependencies
+        if: github.ref == 'refs/heads/main'
+        uses: ./
+        with:
+          expr: |
+            pkgs.python3.withPackages (ps: with ps; [ ghp-import ])
+
+      - name: Push badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          python .github/steps/push_badge.py
