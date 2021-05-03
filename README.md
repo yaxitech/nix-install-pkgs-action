@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: yaxitech/nix-profile-action@TODO
+      - uses: yaxitech/nix-profile-action@v1
         with:
           packages: "nixpkgs#hello, figlet"
       - run: |
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: yaxitech/nix-profile-action@TODO
+      - uses: yaxitech/nix-profile-action@v1
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
       - run: |
