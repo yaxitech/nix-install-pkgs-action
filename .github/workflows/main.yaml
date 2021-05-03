@@ -11,6 +11,7 @@ on:
 jobs:
   check:
     name: Run our Action
+    runs-on: ubuntu-latest
     env:
       GC_DONT_GC: 1
     steps:
@@ -52,6 +53,7 @@ jobs:
   build:
     name: Build bundled action
     if: github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -77,6 +79,7 @@ jobs:
 
   coverage:
     if: github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
