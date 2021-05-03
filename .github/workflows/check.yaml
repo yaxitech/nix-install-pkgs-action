@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   check:
     name: Run checks.
+    if: github.repository_owner == 'yaxitech'
     runs-on: [ self-hosted ]
     env:
       GC_DONT_GC: 1

@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   check:
     name: Run our Action
+    if: github.repository_owner == 'yaxitech'
     runs-on: [ self-hosted ]
     env:
       GC_DONT_GC: 1
@@ -39,7 +40,7 @@ jobs:
 
   build:
     name: Build bundled action
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.repository_owner == 'yaxitech'
     runs-on: [ self-hosted, default ]
     steps:
       - name: Checkout
@@ -58,7 +59,7 @@ jobs:
           python .github/steps/build_action.py
 
   coverage:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.repository_owner == 'yaxitech'
     runs-on: [ self-hosted, default ]
     steps:
       - name: Checkout
