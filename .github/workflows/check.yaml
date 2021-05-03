@@ -1,11 +1,17 @@
 name: 'Checks'
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
 
 jobs:
   check:
     name: Run checks.
-    runs-on: [ self-hosted ]
+    runs-on: ubuntu-latest
     env:
       GC_DONT_GC: 1
     steps:
@@ -14,6 +20,13 @@ jobs:
         with:
           # Nix Flakes doesn't work on shallow clones
           fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v13
+        with:
+          install_url: https://nixos-nix-install-tests.cachix.org/serve/lb41az54kzk6j12p81br4bczary7m145/install
+          install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
+          extra_nix_config: |
+            experimental-features = nix-command flakes ca-references
 
       - name: Check that node-env is up-to-date
         run: |
