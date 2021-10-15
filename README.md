@@ -30,10 +30,7 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v2.3.4
       - uses: yaxitech/nix-profile-action@v1
         with:
           packages: "nixpkgs#hello, figlet"
@@ -58,10 +55,7 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v2.3.4
       - uses: yaxitech/nix-profile-action@v1
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
