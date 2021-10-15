@@ -98,9 +98,7 @@ jobs:
         uses: ./
         with:
           expr: |
-            (builtins.getFlake("github:nixos/nixpkgs/58c179406231ee9d24a9b5646e10df145322ca8e"))
-              .legacyPackages."x86_64-linux"
-              .python3.withPackages (ps: with ps; [ ghp-import ])
+            pkgs.python3.withPackages (ps: with ps; [ ghp-import ])
 
       - name: Push badge
         if: github.ref == 'refs/heads/main'
