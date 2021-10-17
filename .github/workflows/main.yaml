@@ -31,7 +31,7 @@ jobs:
           install_url: https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install
           install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references
+            experimental-features = nix-command flakes ca-references recursive-nix
 
       - name: Run Action (packages)
         uses: ./
@@ -72,7 +72,7 @@ jobs:
           install_url: https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install
           install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references
+            experimental-features = nix-command flakes ca-references recursive-nix
 
       - name: Install job dependencies
         uses: ./
@@ -99,7 +99,7 @@ jobs:
           install_url: https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install
           install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references
+            experimental-features = nix-command flakes ca-references recursive-nix
 
       - name: Run tests with coverage
         run: |

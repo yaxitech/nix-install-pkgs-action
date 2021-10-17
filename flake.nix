@@ -80,7 +80,7 @@
           doCheck = true;
           checkInputs = [ pkgs.nixFlakes ];
           checkPhase = ''
-            export NIX_CONFIG="experimental-features = nix-command flakes";
+            export NIX_CONFIG="experimental-features = nix-command flakes recursive-nix";
             npm run test
           '';
 
