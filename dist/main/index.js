@@ -46,21 +46,25 @@ function getRepoFlake() {
         // Assumes that the CWD is the checked out flake's root
         const cwd = path.resolve(process.cwd());
         const flakeUrl = new URL("git+file://" + cwd);
-        // Add the revision to the flake URL
-        const rev = yield fs_1.promises
-            .readFile(process.env.GITHUB_EVENT_PATH)
-            .then((buf) => buf.toString())
-            .then(JSON.parse)
-            .then((eventData) => eventData.after);
-        flakeUrl.searchParams.append("rev", rev);
-        // Check if this is a shallow clone. When using `builtins.getFlake`,
-        // we have to inform Nix about a shallow clone explicitly.
-        const isShallow = yield fs_1.promises
-            .access(path.join(cwd, ".git", "shallow"), fs_1.constants.F_OK)
-            .then(() => true)
-            .catch(() => false);
-        if (isShallow) {
+        // Check if this is a shallow clone by probing if `.git/shallow` exists.
+        // If yes, read the revision from the file.
+        const shallowRev = yield fs_1.promises
+            .readFile(path.join(cwd, ".git", "shallow"))
+            .then((buf) => buf.toString().trim())
+            .catch(() => undefined);
+        if (shallowRev) {
+            flakeUrl.searchParams.append("rev", shallowRev);
             flakeUrl.searchParams.append("shallow", "1");
+        }
+        else {
+            // If this is not a shallow clone, read the revision from the GitHub
+            // event data.
+            const rev = yield fs_1.promises
+                .readFile(process.env.GITHUB_EVENT_PATH)
+                .then((buf) => buf.toString())
+                .then(JSON.parse)
+                .then((eventData) => eventData.after);
+            flakeUrl.searchParams.append("rev", rev);
         }
         return `builtins.getFlake("${flakeUrl}")`;
     });
