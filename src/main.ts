@@ -11,22 +11,25 @@ async function getRepoFlake(): Promise<string> {
   const cwd = path.resolve(process.cwd());
   const flakeUrl = new URL("git+file://" + cwd);
 
-  // Check if this is a shallow clone. When using `builtins.getFlake`,
-  // we have to inform Nix about a shallow clone explicitly.
-  await promises
-    .access(path.join(cwd, ".git", "shallow"), constants.F_OK)
-    .then(() => flakeUrl.searchParams.append("shallow", "1"))
-    .catch(() => {
-      /* ignored */
-    });
-
   // Add the revision to the flake URL
-  await promises
+  const rev = await promises
     .readFile(process.env.GITHUB_EVENT_PATH as string)
     .then((buf) => buf.toString())
     .then(JSON.parse)
-    .then((eventData) => eventData.after)
-    .then((rev) => flakeUrl.searchParams.append("rev", rev));
+    .then((eventData) => eventData.after);
+
+  flakeUrl.searchParams.append("rev", rev);
+
+  // Check if this is a shallow clone. When using `builtins.getFlake`,
+  // we have to inform Nix about a shallow clone explicitly.
+  const isShallow = await promises
+    .access(path.join(cwd, ".git", "shallow"), constants.F_OK)
+    .then(() => true)
+    .catch(() => false);
+
+  if (isShallow) {
+    flakeUrl.searchParams.append("shallow", "1");
+  }
 
   return `builtins.getFlake("${flakeUrl}")`;
 }
