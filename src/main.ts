@@ -1,21 +1,37 @@
 import * as core from "@actions/core";
 import { exec } from "@actions/exec";
-import { mkdtemp, readFile } from "fs";
+import { promises, constants } from "fs";
 import { tmpdir } from "os";
 import * as path from "path";
-import { promisify } from "util";
 
-import { determineSystem, runNix } from "./nix";
-
-const mkdtempAsync = promisify(mkdtemp);
-const readFileAsync = promisify(readFile);
+import { determineSystem } from "./nix";
 
 async function getRepoFlake(): Promise<string> {
-  const eventData = await readFileAsync(
-    process.env.GITHUB_EVENT_PATH as string
-  );
-  const rev = JSON.parse(eventData.toString()).after;
-  return `builtins.getFlake("git+file://" + (toString ./.) + "?rev=${rev}")`;
+  // Assumes that the CWD is the checked out flake's root
+  const cwd = path.resolve(process.cwd());
+  const flakeUrl = new URL("git+file://" + cwd);
+
+  // Add the revision to the flake URL
+  const rev = await promises
+    .readFile(process.env.GITHUB_EVENT_PATH as string)
+    .then((buf) => buf.toString())
+    .then(JSON.parse)
+    .then((eventData) => eventData.after);
+
+  flakeUrl.searchParams.append("rev", rev);
+
+  // Check if this is a shallow clone. When using `builtins.getFlake`,
+  // we have to inform Nix about a shallow clone explicitly.
+  const isShallow = await promises
+    .access(path.join(cwd, ".git", "shallow"), constants.F_OK)
+    .then(() => true)
+    .catch(() => false);
+
+  if (isShallow) {
+    flakeUrl.searchParams.append("shallow", "1");
+  }
+
+  return `builtins.getFlake("${flakeUrl}")`;
 }
 
 function maybeAddNixpkgs(pkg: string) {
@@ -30,7 +46,7 @@ async function main() {
   let tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
   // Allow to execute this action multiple times with different packages
   if (!tmpDir) {
-    tmpDir = await mkdtempAsync(path.join(tmpdir(), "nix-profile-"));
+    tmpDir = await promises.mkdtemp(path.join(tmpdir(), "nix-profile-"));
   }
 
   const nixProfileDir = path.join(tmpDir, ".nix-profile");
