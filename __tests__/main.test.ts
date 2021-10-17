@@ -67,6 +67,7 @@ test("installs expr into profile", async () => {
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
+  const cwd = path.resolve(process.cwd());
   expect(exec.exec).toBeCalledWith("nix", [
     "profile",
     "install",
@@ -74,7 +75,7 @@ test("installs expr into profile", async () => {
     nixProfileDir,
     "--expr",
     `let
-         repoFlake = builtins.getFlake("git+file://" + (toString ./.) + "?rev=0000000000000000000000000000000000000000");
+         repoFlake = builtins.getFlake("git+file://${cwd}?rev=0000000000000000000000000000000000000000");
          pkgs = (import repoFlake.inputs.nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
   ]);
