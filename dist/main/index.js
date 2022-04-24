@@ -8,7 +8,11 @@
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -59,11 +63,14 @@ function getRepoFlake() {
         else {
             // If this is not a shallow clone, read the revision from the GitHub
             // event data.
-            const rev = yield fs_1.promises
+            const eventData = yield fs_1.promises
                 .readFile(process.env.GITHUB_EVENT_PATH)
                 .then((buf) => buf.toString())
-                .then(JSON.parse)
-                .then((eventData) => eventData.after);
+                .then(JSON.parse);
+            const eventType = process.env.GITHUB_EVENT_NAME;
+            const rev = eventType === "pull_request"
+                ? eventData.pull_request.head.sha
+                : eventData.after;
             flakeUrl.searchParams.append("rev", rev);
         }
         return `builtins.getFlake("${flakeUrl}")`;
