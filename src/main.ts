@@ -24,11 +24,15 @@ async function getRepoFlake(): Promise<string> {
   } else {
     // If this is not a shallow clone, read the revision from the GitHub
     // event data.
-    const rev = await promises
+    const eventData = await promises
       .readFile(process.env.GITHUB_EVENT_PATH as string)
       .then((buf) => buf.toString())
-      .then(JSON.parse)
-      .then((eventData) => eventData.after);
+      .then(JSON.parse);
+    const eventType = process.env.GITHUB_EVENT_NAME as string;
+    const rev =
+      eventType === "pull_request"
+        ? eventData.pull_request.head.sha
+        : eventData.after;
     flakeUrl.searchParams.append("rev", rev);
   }
 
