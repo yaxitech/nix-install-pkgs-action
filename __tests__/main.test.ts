@@ -3,7 +3,7 @@ import * as exec from "@actions/exec";
 import { rmRF } from "@actions/io";
 import * as fs from "fs";
 import * as path from "path";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 
 import main from "../src/main";
 
