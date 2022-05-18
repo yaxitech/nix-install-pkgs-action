@@ -12,7 +12,7 @@
       let
         pkgs = import nixpkgs { inherit system; };
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
-        nodejs = pkgs.nodejs-12_x;
+        nodejs = pkgs.nodejs-16_x;
         nodeEnv = pkgs.callPackage ./node-env { inherit nodejs; };
         pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
       in
@@ -102,7 +102,7 @@
                 --node-env node-env/node-env.nix \
                 --output node-env/node-packages.nix \
                 --composition node-env/default.nix \
-                --nodejs-12
+                --nodejs-16
               ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt node-env
             '');
           };
