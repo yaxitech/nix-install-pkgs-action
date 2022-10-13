@@ -2,10 +2,7 @@
   description = "A GitHub Action to install an ephemeral Nix profile";
 
   inputs.nixpkgs.url = "nixpkgs/nixpkgs-unstable";
-  inputs.flake-utils = {
-    url = "github:numtide/flake-utils";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
+  inputs.flake-utils.url = "github:numtide/flake-utils";
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -42,7 +39,7 @@
         checks.prettier =
           let
             checkFormatCommand = packageJson.scripts.check-format;
-            buildInputs = self.defaultPackage.${system}.buildInputs;
+            buildInputs = self.packages.${system}.default.buildInputs;
           in
           pkgs.runCommand "check-ts-format" { inherit buildInputs; } ''
             cd ${./.}
@@ -64,7 +61,7 @@
           echo 'All metadata checks completed successfully'
         '';
 
-        defaultPackage = pkgs.stdenv.mkDerivation {
+        packages.default = pkgs.stdenv.mkDerivation {
           name = packageJson.name;
 
           buildInputs = [
@@ -83,7 +80,7 @@
           '';
 
           doCheck = true;
-          checkInputs = [ pkgs.nixFlakes ];
+          checkInputs = [ pkgs.nixVersions.stable ];
           checkPhase = ''
             export NIX_CONFIG="experimental-features = nix-command flakes recursive-nix";
             npm run test
@@ -119,7 +116,7 @@
           };
         };
 
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           name = "${packageJson.name}-shell";
 
           buildInputs = with pkgs; [
