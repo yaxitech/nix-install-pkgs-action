@@ -7,27 +7,28 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
-        packageJson = builtins.fromJSON (builtins.readFile ./package.json);
+        lib = nixpkgs.lib;
+        pkgs = nixpkgs.legacyPackages.${system};
+        packageJson = lib.importJSON "${self}/package.json";
         nodejs = pkgs.nodejs-16_x;
-        nodeEnv = pkgs.callPackage ./node-env { inherit nodejs; };
+        nodeEnv = pkgs.callPackage "${self}/node-env" { inherit nodejs; };
         pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
       in
-      with pkgs.lib;
+      with lib;
       {
         checks.black = pkgs.runCommand "check-py-format" { buildInputs = [ pythonEnv ]; } ''
-          black --check ${./.}
+          black --check ${self}
           mkdir $out # success
         '';
 
         checks.mypy = pkgs.runCommand "check-py-types" { buildInputs = [ pythonEnv ]; } ''
           # mypy doesn't recurse into hidden directories
-          mypy ${./.github}
+          mypy "${self}/.github"
           mkdir $out # success
         '';
 
         checks.nixpkgs-fmt = pkgs.runCommand "check-nix-format" { } ''
-          ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt --check ${./.}
+          ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt --check ${self}
           mkdir $out #sucess
         '';
 
@@ -37,15 +38,15 @@
             buildInputs = self.packages.${system}.default.buildInputs;
           in
           pkgs.runCommand "check-ts-format" { inherit buildInputs; } ''
-            cd ${./.}
+            cd ${self}
             ${checkFormatCommand}
             mkdir $out # success
           '';
 
         checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
-          flakeDescription=${escapeShellArg (import ./flake.nix).description}
+          flakeDescription=${escapeShellArg (import "${self}/flake.nix").description}
           packageDescription=${escapeShellArg packageJson.description}
-          actionDescription="$(yq -r '.description' ${./action.yaml})"
+          actionDescription="$(yq -r '.description' '${self}/action.yaml')"
           if [[ "$flakeDescription" == "$packageDescription" && "$flakeDescription" == "$actionDescription" ]]; then
             mkdir $out # success
           else
@@ -64,7 +65,7 @@
             nodeEnv.nodeDependencies
           ];
 
-          src = ./.;
+          src = self;
 
           buildPhase = ''
             HOME=.
