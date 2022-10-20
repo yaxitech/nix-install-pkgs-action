@@ -13,7 +13,7 @@ As soon as the action terminatesâ€”no matter if successfully or unsuccessfullyâ€
 allow garbage collection of all installed derivations.
 
 [nixos]: https://nixos.org
-[nixos-runner]: https://search.nixos.org/options?channel=unstable&query=services.github-runner
+[nixos-runner]: https://search.nixos.org/options?channel=unstable&query=services.github-runner.
 
 ## Usage
 
@@ -30,7 +30,7 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v3
       - uses: yaxitech/nix-profile-action@v2
         with:
           packages: "nixpkgs#hello, figlet"
@@ -55,7 +55,7 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v3
       - uses: yaxitech/nix-profile-action@v2
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
@@ -66,18 +66,13 @@ jobs:
 ## Prerequisites
 
 This action requires a Flake-enabled Nix with support for
-[profiles](https://nixos.org/manual/nix/unstable/command-ref/new-cli/nix3-profile.html).
+[profiles](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-profile.html).
 
 ### NixOS
 
 ```nix
 {
-  nix = {
-    package = pkgs.nixFlakes;
-    extraOptions = ''
-      experimental-features = nix-command flakes ca-references
-    '';
-  };
+  nix.settings.experimental-features = [ "nix-command" "flakes" "ca-references" ];
 }
 ```
 
@@ -105,11 +100,9 @@ following snippet into your `configuration.nix`:
 
 ```nix
 {
-  nix = {
-    extraOptions = ''
-      experimental-features = nix-command flakes recursive-nix
-    '';
-    systemFeatures = [ "recursive-nix" ];
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" "ca-references" ];
+    system-features = [ "recursive-nix" ];
   };
 }
 ```
