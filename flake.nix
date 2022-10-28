@@ -67,6 +67,8 @@
 
           src = self;
 
+          NODE_OPTIONS = "--openssl-legacy-provider";
+
           buildPhase = ''
             HOME=.
 
