@@ -72,7 +72,7 @@ This action requires a Flake-enabled Nix with support for
 
 ```nix
 {
-  nix.settings.experimental-features = [ "nix-command" "flakes" "ca-references" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 }
 ```
 
@@ -80,12 +80,6 @@ This action requires a Flake-enabled Nix with support for
 
 Use [`cachix/install-nix-action`](https://github.com/cachix/install-nix-action#usage-with-flakes)
 to install Nix with flake support.
-Make sure you also add `ca-references` to the input `extra_nix_config`:
-
-```yaml
-extra_nix_config: |
-  experimental-features = nix-command flakes ca-references
-```
 
 ## Development notes
 
@@ -101,7 +95,7 @@ following snippet into your `configuration.nix`:
 ```nix
 {
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" "ca-references" ];
+    experimental-features = [ "nix-command" "flakes" "recursive-nix" ];
     system-features = [ "recursive-nix" ];
   };
 }

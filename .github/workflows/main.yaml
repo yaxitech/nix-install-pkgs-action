@@ -25,7 +25,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Verify flake.lock is up-to-date
         run: |
@@ -53,7 +53,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Run Action (packages)
         uses: ./
@@ -92,7 +92,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Install job dependencies
         uses: ./
@@ -117,7 +117,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Run tests with coverage
         run: |
