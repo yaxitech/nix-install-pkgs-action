@@ -1,6 +1,6 @@
-# nix-profile-action
+# nix-install-pkgs-action
 
-![Coverage](https://github.com/yaxitech/nix-profile-action/blob/gh-pages/coverage.svg)
+![Coverage](https://github.com/yaxitech/nix-install-pkgs-action/blob/gh-pages/coverage.svg)
 
 A GitHub Action to install [Nix][nixos] packages into an ephemeral profile.
 
@@ -29,7 +29,7 @@ Install `packages` by giving a comma-separated string of packages from a flake.
 If no flake reference is given, `nixpkgs` is assumed. Example:
 
 ```yaml
-name: 'nix-profile-action packages'
+name: 'nix-install-pkgs-action packages'
 on:
   - pull_request
   - push
@@ -38,12 +38,12 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
-      - uses: yaxitech/nix-profile-action@v2
+      - uses: yaxitech/nix-install-pkgs-action@v2
         with:
           packages: "nixpkgs#hello, figlet"
       - run: |
           hello
-          figlet "Hello nix-profile-action!"
+          figlet "Hello nix-install-pkgs-action!"
 
 ```
 
@@ -67,7 +67,7 @@ resolution strategy as outlined for the `packages` input.
 In the following example, `pkgs` references `inputs.nixpkgs` from the flake `github:yaxitech/ragenix`:
 
 ```yaml
-name: 'nix-profile-action expr'
+name: 'nix-install-pkgs-action expr'
 on:
   - pull_request
   - push
@@ -76,7 +76,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
-      - uses: yaxitech/nix-profile-action@v2
+      - uses: yaxitech/nix-install-pkgs-action@v2
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
           inputs-from: 'github:yaxitech/ragenix'

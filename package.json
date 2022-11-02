@@ -1,5 +1,5 @@
 {
-  "name": "nix-profile-action",
+  "name": "nix-install-pkgs-action",
   "private": true,
   "version": "2.0.0",
   "description": "Install flake packages using an ephemeral Nix profile",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yaxitech/nix-profile-action"
+    "url": "git+https://github.com/yaxitech/nix-install-pkgs-action"
   },
   "keywords": [
     "actions",

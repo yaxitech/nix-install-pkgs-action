@@ -3336,9 +3336,9 @@ let
     };
   };
   args = {
-    name = "nix-profile-action";
-    packageName = "nix-profile-action";
-    version = "2.0.0";
+    name = "nix-install-pkgs-action";
+    packageName = "nix-install-pkgs-action";
+    version = "3.0.0";
     src = ./..;
     dependencies = [
       sources."@actions/core-1.10.0"
@@ -3751,7 +3751,7 @@ let
     ];
     buildInputs = globalBuildInputs;
     meta = {
-      description = "A GitHub Action to install an ephemeral Nix profile";
+      description = "Install flake packages using an ephemeral Nix profile";
       license = "Apache-2.0";
     };
     production = false;
