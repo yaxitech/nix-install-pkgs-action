@@ -1,11 +1,9 @@
 import * as core from "@actions/core";
-import { exec } from "@actions/exec";
-import { Cipher } from "crypto";
-import { promises, constants } from "fs";
+import { promises } from "fs";
 import { tmpdir } from "os";
 import * as path from "path";
 
-import { determineSystem } from "./nix";
+import { determineSystem, runNix, maybeAddNixpkgs } from "./nix";
 
 async function getRepoFlake(): Promise<string> {
   // Assumes that the CWD is the checked out flake's root
@@ -40,14 +38,6 @@ async function getRepoFlake(): Promise<string> {
   return `builtins.getFlake("${flakeUrl}")`;
 }
 
-function maybeAddNixpkgs(pkg: string) {
-  if (pkg.indexOf("#") < 0) {
-    return "nixpkgs#" + pkg;
-  } else {
-    return pkg;
-  }
-}
-
 async function main() {
   // Fail if no input is given
   if (!core.getInput("packages") && !core.getInput("expr")) {
@@ -65,12 +55,14 @@ async function main() {
   // Install given `packages`, if any
   const packages = core.getInput("packages");
   if (packages) {
-    const augumentedPackages: string[] = packages
-      .split(",")
-      .map((str) => str.trim())
-      .map(maybeAddNixpkgs);
+    const augumentedPackages = await Promise.all(
+      packages
+        .split(",")
+        .map((str) => str.trim())
+        .map(maybeAddNixpkgs)
+    );
 
-    await exec("nix", [
+    await runNix([
       "profile",
       "install",
       "--profile",
@@ -84,7 +76,7 @@ async function main() {
   if (expr) {
     const system = await determineSystem();
     const repoFlake = await getRepoFlake();
-    await exec("nix", [
+    await runNix([
       "profile",
       "install",
       "--profile",

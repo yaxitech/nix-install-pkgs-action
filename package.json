@@ -8,7 +8,8 @@
     "build": "tsc && ncc build -o dist/main lib/main.js && ncc build -o dist/post lib/post.js",
     "format": "prettier --write **/*.ts",
     "check-format": "prettier --check **/*.ts",
-    "test": "jest",
+    "test": "jest --useStderr >/dev/null",
+    "test-no-recursive-nix": "jest --testPathIgnorePatterns 'nix.test' --useStderr >/dev/null",
     "coverage": "jest --coverage"
   },
   "repository": {
