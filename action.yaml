@@ -1,11 +1,14 @@
-name: 'Install Nix Profile'
-description: 'A GitHub Action to install an ephemeral Nix profile'
+name: 'Install Nix Packages'
+description: 'Install flake packages using an ephemeral Nix profile'
+branding:
+  icon: 'loader'
+  color: 'gray-dark'
 inputs:
   packages:
-    description: 'The packages you want to install'
+    description: 'Comma-separated list of flake package references to install'
     required: false
   expr:
-    description: 'Install the given Nix expression into the profile.'
+    description: 'Install a derivation by evaluating the given expression'
     required: false
   inputs-from:
     description: 'Use inputs of the given flake as registry entries'

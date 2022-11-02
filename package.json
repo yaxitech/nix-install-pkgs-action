@@ -2,7 +2,7 @@
   "name": "nix-profile-action",
   "private": true,
   "version": "2.0.0",
-  "description": "A GitHub Action to install an ephemeral Nix profile",
+  "description": "Install flake packages using an ephemeral Nix profile",
   "main": "index.js",
   "scripts": {
     "build": "tsc && ncc build -o dist/main lib/main.js && ncc build -o dist/post lib/post.js",

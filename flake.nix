@@ -1,5 +1,5 @@
 {
-  description = "A GitHub Action to install an ephemeral Nix profile";
+  description = "Install flake packages using an ephemeral Nix profile";
 
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
