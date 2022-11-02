@@ -1,9 +1,12 @@
+import { ExecOutput } from "@actions/exec";
 import { determineSystem, runNix } from "../src/nix";
 
 test("runNix returns Nix output", () => {
-  return expect(runNix(["eval", "--expr", '"wurzelpfropf"'])).resolves.toEqual(
-    '"wurzelpfropf"\n'
-  );
+  return expect(runNix(["eval", "--expr", '"wurzelpfropf"'])).resolves.toEqual({
+    stdout: '"wurzelpfropf"\n',
+    stderr: "",
+    exitCode: 0,
+  } as ExecOutput);
 });
 
 test("determineSystem() returns system", () => {

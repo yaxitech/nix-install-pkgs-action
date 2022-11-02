@@ -63,33 +63,55 @@ test("installs packages into profile", async () => {
   jest
     .spyOn(exec, "getExecOutput")
     .mockImplementation((commandLine, args?: string[], options?) => {
-      const pkg = args?.slice(-1)[0];
-      const res = {} as exec.ExecOutput;
-      switch (pkg) {
-        case "package1":
-          res.exitCode = 1;
-          res.stderr = `error: cannot find flake 'flake:${pkg}' in the flake registries`;
+      const res = {
+        exitCode: 0,
+        stderr: "",
+        stdout: "",
+      } as exec.ExecOutput;
+
+      if (args == undefined) {
+        throw Error(`Expected arguments`);
+      }
+
+      switch (args[0]) {
+        case "flake":
+          const flakeRef = args.slice(-1)[0];
+          switch (flakeRef) {
+            case "package1":
+              res.exitCode = 1;
+              res.stderr = `error: cannot find flake 'flake:${flakeRef}' in the flake registries`;
+              break;
+            default:
+              break;
+          }
+        case "profile":
           break;
         default:
-          res.exitCode = 0;
-          break;
+          throw Error(
+            `Should not reach here: ${commandLine} ${args?.join(" ")}`
+          );
       }
+
       return Promise.resolve(res);
     });
 
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(exec.exec).toBeCalledWith("nix", [
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "nixpkgs#package1",
-    "nixpkgs#package2",
-    "github:yaxitech/ragenix",
-  ]);
-  expect(exec.exec).toHaveBeenCalledTimes(1);
+  expect(exec.getExecOutput).toBeCalledWith(
+    "nix",
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "nixpkgs#package1",
+      "nixpkgs#package2",
+      "github:yaxitech/ragenix",
+    ],
+    { silent: true }
+  );
+  expect(exec.getExecOutput).toHaveBeenCalledTimes(4);
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
@@ -103,14 +125,15 @@ test("installs expr into profile", async () => {
     }
   });
 
-  jest.spyOn(exec, "exec").mockImplementation(async (cmd, args, options) => {
-    if (args && args[args.length - 1] === "builtins.currentSystem") {
-      if (options?.listeners?.stdout) {
-        options.listeners.stdout(Buffer.from('"i686-linux"'));
-      }
-    }
-    return 0;
-  });
+  jest
+    .spyOn(exec, "getExecOutput")
+    .mockImplementation((commandLine, args?: string[], options?) => {
+      return Promise.resolve({
+        exitCode: 0,
+        stderr: "",
+        stdout: `"i686-linux"`,
+      } as exec.ExecOutput);
+    });
 
   process.env.GITHUB_EVENT_PATH = path.join(
     __dirname,
@@ -122,19 +145,23 @@ test("installs expr into profile", async () => {
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
   const cwd = path.resolve(process.cwd());
-  expect(exec.exec).toBeCalledWith("nix", [
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "--expr",
-    `let
+  expect(exec.getExecOutput).toBeCalledWith(
+    "nix",
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--expr",
+      `let
          repoFlake = builtins.getFlake("git+file://${cwd}?rev=0000000000000000000000000000000000000000");
          pkgs = (import repoFlake.inputs.nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
-  ]);
+    ],
+    { silent: true }
+  );
   // `determineSystem` + `nix profile install --expr`
-  expect(exec.exec).toHaveBeenCalledTimes(2);
+  expect(exec.getExecOutput).toHaveBeenCalledTimes(2);
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
@@ -153,20 +180,33 @@ test("installs packages and expr into profile", async () => {
   jest
     .spyOn(exec, "getExecOutput")
     .mockImplementation((commandLine, args?: string[], options?) => {
-      const res = {} as exec.ExecOutput;
-      res.exitCode = 1;
-      res.stderr = `error: cannot find flake 'flake:wuffmiau' in the flake registries`;
+      const res = {
+        exitCode: 0,
+        stderr: "",
+        stdout: "",
+      } as exec.ExecOutput;
+
+      if (args == undefined) {
+        throw Error(`Expected arguments`);
+      }
+
+      switch (args[0]) {
+        case "eval":
+          res.stdout = `"i686-linux"`;
+          break;
+        case "flake":
+          res.exitCode = 1;
+          res.stderr = `error: cannot find flake 'flake:wuffmiau' in the flake registries`;
+        case "profile":
+          break;
+        default:
+          throw Error(
+            `Should not reach here: ${commandLine} ${args?.join(" ")}`
+          );
+      }
+
       return Promise.resolve(res);
     });
-
-  jest.spyOn(exec, "exec").mockImplementation(async (cmd, args, options) => {
-    if (args && args[args.length - 1] === "builtins.currentSystem") {
-      if (options?.listeners?.stdout) {
-        options.listeners.stdout(Buffer.from('"i686-linux"'));
-      }
-    }
-    return 0;
-  });
 
   process.env.GITHUB_EVENT_PATH = path.join(
     __dirname,
@@ -176,32 +216,40 @@ test("installs packages and expr into profile", async () => {
 
   await main();
 
+  expect(exec.getExecOutput).toBeCalledWith(
+    "nix",
+    ["flake", "metadata", "wuffmiau"],
+    { ignoreReturnCode: true, silent: true }
+  );
+
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
 
   // `packages` input
-  expect(exec.exec).toBeCalledWith("nix", [
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "nixpkgs#wuffmiau",
-  ]);
+  expect(exec.getExecOutput).toBeCalledWith(
+    "nix",
+    ["profile", "install", "--profile", nixProfileDir, "nixpkgs#wuffmiau"],
+    { silent: true }
+  );
 
   // `expr` input
   const cwd = path.resolve(process.cwd());
-  expect(exec.exec).toBeCalledWith("nix", [
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "--expr",
-    `let
+  expect(exec.getExecOutput).toBeCalledWith(
+    "nix",
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--expr",
+      `let
          repoFlake = builtins.getFlake("git+file://${cwd}?rev=0000000000000000000000000000000000000000");
          pkgs = (import repoFlake.inputs.nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
-  ]);
+    ],
+    { silent: true }
+  );
   // `determineSystem` + `nix profile install --expr`
-  expect(exec.exec).toHaveBeenCalledTimes(3);
+  expect(exec.getExecOutput).toHaveBeenCalledTimes(4);
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 

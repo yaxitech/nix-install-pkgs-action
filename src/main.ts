@@ -1,11 +1,9 @@
 import * as core from "@actions/core";
-import { exec, getExecOutput } from "@actions/exec";
-import { Cipher } from "crypto";
-import { promises, constants } from "fs";
+import { promises } from "fs";
 import { tmpdir } from "os";
 import * as path from "path";
 
-import { determineSystem } from "./nix";
+import { determineSystem, runNix } from "./nix";
 
 async function getRepoFlake(): Promise<string> {
   // Assumes that the CWD is the checked out flake's root
@@ -41,7 +39,7 @@ async function getRepoFlake(): Promise<string> {
 }
 
 async function maybeAddNixpkgs(pkg: string): Promise<string> {
-  const res = await getExecOutput("nix", ["flake", "metadata", pkg], {
+  const res = await runNix(["flake", "metadata", pkg], {
     ignoreReturnCode: true,
     silent: !core.isDebug(),
   });
@@ -79,7 +77,7 @@ async function main() {
         .map(maybeAddNixpkgs)
     );
 
-    await exec("nix", [
+    await runNix([
       "profile",
       "install",
       "--profile",
@@ -93,7 +91,7 @@ async function main() {
   if (expr) {
     const system = await determineSystem();
     const repoFlake = await getRepoFlake();
-    await exec("nix", [
+    await runNix([
       "profile",
       "install",
       "--profile",
