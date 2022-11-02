@@ -9,11 +9,35 @@ on:
     - main
 
 jobs:
+  build-nix:
+    name: Build Nix package
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes recursive-nix
+
+      - name: Verify flake.lock is up-to-date
+        run: |
+          nix flake lock --no-update-lock-file
+
+      - name: Build package
+        run: |
+          nix build -L
+
   check:
     name: Run our Action
     runs-on: ubuntu-latest
-    env:
-      GC_DONT_GC: 1
     strategy:
       matrix:
         fetch-depth:
@@ -29,7 +53,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Run Action (packages)
         uses: ./
@@ -68,7 +92,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Install job dependencies
         uses: ./
@@ -93,7 +117,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Run tests with coverage
         run: |

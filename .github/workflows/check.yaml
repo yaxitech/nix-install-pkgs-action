@@ -22,7 +22,7 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references recursive-nix
+            experimental-features = nix-command flakes recursive-nix
 
       - name: Check that node-env is up-to-date
         run: |
