@@ -3,7 +3,7 @@ import { promises } from "fs";
 import { tmpdir } from "os";
 import * as path from "path";
 
-import { determineSystem, runNix } from "./nix";
+import { determineSystem, runNix, maybeAddNixpkgs } from "./nix";
 
 async function getRepoFlake(): Promise<string> {
   // Assumes that the CWD is the checked out flake's root
@@ -36,21 +36,6 @@ async function getRepoFlake(): Promise<string> {
   }
 
   return `builtins.getFlake("${flakeUrl}")`;
-}
-
-async function maybeAddNixpkgs(pkg: string): Promise<string> {
-  const res = await runNix(["flake", "metadata", pkg], {
-    ignoreReturnCode: true,
-    silent: !core.isDebug(),
-  });
-  if (res.exitCode == 0) {
-    return pkg;
-  } else if (res.stderr.includes(`cannot find`)) {
-    core.info(`Prefixing "${pkg}" with "nixpkgs#"`);
-    return `nixpkgs#${pkg}`;
-  } else {
-    throw Error(`Given flake reference "${pkg}" is invalid: ${res.stderr}"`);
-  }
 }
 
 async function main() {
