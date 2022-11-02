@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import { exec } from "@actions/exec";
+import { Cipher } from "crypto";
 import { promises, constants } from "fs";
 import { tmpdir } from "os";
 import * as path from "path";
@@ -48,6 +49,11 @@ function maybeAddNixpkgs(pkg: string) {
 }
 
 async function main() {
+  // Fail if no input is given
+  if (!core.getInput("packages") && !core.getInput("expr")) {
+    throw Error("Neither the `packages` nor the `expr` input is given");
+  }
+
   let tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
   // Allow to execute this action multiple times with different packages
   if (!tmpDir) {
@@ -56,12 +62,24 @@ async function main() {
 
   const nixProfileDir = path.join(tmpDir, ".nix-profile");
 
-  const packages: string[] = core
-    .getInput("packages")
-    .split(",")
-    .map((str) => str.trim())
-    .map(maybeAddNixpkgs);
+  // Install given `packages`, if any
+  const packages = core.getInput("packages");
+  if (packages) {
+    const augumentedPackages: string[] = packages
+      .split(",")
+      .map((str) => str.trim())
+      .map(maybeAddNixpkgs);
 
+    await exec("nix", [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      ...augumentedPackages,
+    ]);
+  }
+
+  // Evaluate `expr` and install, if given
   const expr = core.getInput("expr");
   if (expr) {
     const system = await determineSystem();
@@ -76,14 +94,6 @@ async function main() {
          repoFlake = ${repoFlake};
          pkgs = (import repoFlake.inputs.nixpkgs { system = "${system}"; });
        in ${expr}`,
-    ]);
-  } else {
-    await exec("nix", [
-      "profile",
-      "install",
-      "--profile",
-      nixProfileDir,
-      ...packages,
     ]);
   }
 
