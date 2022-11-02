@@ -69,6 +69,17 @@ jobs:
         with:
           expr: 'pkgs.figlet'
 
+      - name: Run Action (packages + expr)
+        uses: ./
+        with:
+          packages: cowsay
+          expr: 'pkgs.ponysay'
+
+      - name: Run `cowsay` and `ponysay`
+        run: |
+          cowsay "Muhhhh"
+          ponysay "Hüüühhhhh"
+
       - name: List installed packages
         run:
           nix profile list --profile "$STATE_NIX_PROFILE_TMPDIR"/.nix-profile
