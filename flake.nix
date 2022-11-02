@@ -113,6 +113,12 @@
               ${nodejs}/bin/npm install --package-lock-only
             '');
           };
+
+          update-dist = flake-utils.lib.mkApp {
+            drv = (pkgs.writeShellScriptBin "update-dist" ''
+              cp -r ${self.packages.${system}.default}/lib/{main,post} dist/
+            '');
+          };
         };
 
         devShells.default = pkgs.mkShell {
