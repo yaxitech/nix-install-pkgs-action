@@ -80,12 +80,15 @@
           # recursive-nix is broken on Darwin
           requiredSystemFeatures = lib.optionals (!pkgs.stdenv.isDarwin) [ "recursive-nix" ];
 
-          doCheck = !pkgs.stdenv.isDarwin;
+          doCheck = true;
           checkInputs = [ pkgs.nixVersions.stable ];
           checkPhase = ''
             export NIX_CONFIG="experimental-features = nix-command flakes recursive-nix";
+          '' + (if pkgs.stdenv.isDarwin then ''
+            npm run test-no-recursive-nix
+          '' else ''
             npm run test
-          '';
+          '');
 
           installPhase = ''
             mkdir -p     $out/lib/
