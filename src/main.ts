@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { exec } from "@actions/exec";
+import { exec, getExecOutput } from "@actions/exec";
 import { Cipher } from "crypto";
 import { promises, constants } from "fs";
 import { tmpdir } from "os";
@@ -40,11 +40,18 @@ async function getRepoFlake(): Promise<string> {
   return `builtins.getFlake("${flakeUrl}")`;
 }
 
-function maybeAddNixpkgs(pkg: string) {
-  if (pkg.indexOf("#") < 0) {
-    return "nixpkgs#" + pkg;
-  } else {
+async function maybeAddNixpkgs(pkg: string): Promise<string> {
+  const res = await getExecOutput("nix", ["flake", "metadata", pkg], {
+    ignoreReturnCode: true,
+    silent: !core.isDebug(),
+  });
+  if (res.exitCode == 0) {
     return pkg;
+  } else if (res.stderr.includes(`cannot find`)) {
+    core.info(`Prefixing "${pkg}" with "nixpkgs#"`);
+    return `nixpkgs#${pkg}`;
+  } else {
+    throw Error(`Given flake reference "${pkg}" is invalid: ${res.stderr}"`);
   }
 }
 
@@ -65,10 +72,12 @@ async function main() {
   // Install given `packages`, if any
   const packages = core.getInput("packages");
   if (packages) {
-    const augumentedPackages: string[] = packages
-      .split(",")
-      .map((str) => str.trim())
-      .map(maybeAddNixpkgs);
+    const augumentedPackages = await Promise.all(
+      packages
+        .split(",")
+        .map((str) => str.trim())
+        .map(maybeAddNixpkgs)
+    );
 
     await exec("nix", [
       "profile",

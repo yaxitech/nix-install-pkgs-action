@@ -25,15 +25,57 @@ test("fails with no inputs", async () => {
   );
 });
 
+test("fails for invalid flake reference", async () => {
+  jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
+    switch (name) {
+      case "packages":
+        return "wurzel:pfropf";
+      default:
+        throw Error("Should not reach here");
+    }
+  });
+
+  jest
+    .spyOn(exec, "getExecOutput")
+    .mockImplementation((commandLine, args?: string[], options?) => {
+      const res = {
+        exitCode: 1,
+        stderr: `error: input 'wurzel:pfropf' is unsupported`,
+      } as exec.ExecOutput;
+      return Promise.resolve(res);
+    });
+
+  await expect(main()).rejects.toThrow(
+    `Given flake reference "wurzel:pfropf" is invalid: error: input 'wurzel:pfropf' is unsupported`
+  );
+});
+
 test("installs packages into profile", async () => {
   jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
     switch (name) {
       case "packages":
-        return "package1,nixpkgs#package2";
+        return "package1,nixpkgs#package2,github:yaxitech/ragenix";
       default:
         return "";
     }
   });
+
+  jest
+    .spyOn(exec, "getExecOutput")
+    .mockImplementation((commandLine, args?: string[], options?) => {
+      const pkg = args?.slice(-1)[0];
+      const res = {} as exec.ExecOutput;
+      switch (pkg) {
+        case "package1":
+          res.exitCode = 1;
+          res.stderr = `error: cannot find flake 'flake:${pkg}' in the flake registries`;
+          break;
+        default:
+          res.exitCode = 0;
+          break;
+      }
+      return Promise.resolve(res);
+    });
 
   await main();
 
@@ -45,6 +87,7 @@ test("installs packages into profile", async () => {
     nixProfileDir,
     "nixpkgs#package1",
     "nixpkgs#package2",
+    "github:yaxitech/ragenix",
   ]);
   expect(exec.exec).toHaveBeenCalledTimes(1);
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
@@ -106,6 +149,15 @@ test("installs packages and expr into profile", async () => {
         throw Error("Should not reach here");
     }
   });
+
+  jest
+    .spyOn(exec, "getExecOutput")
+    .mockImplementation((commandLine, args?: string[], options?) => {
+      const res = {} as exec.ExecOutput;
+      res.exitCode = 1;
+      res.stderr = `error: cannot find flake 'flake:wuffmiau' in the flake registries`;
+      return Promise.resolve(res);
+    });
 
   jest.spyOn(exec, "exec").mockImplementation(async (cmd, args, options) => {
     if (args && args[args.length - 1] === "builtins.currentSystem") {
