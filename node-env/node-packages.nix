@@ -3338,7 +3338,7 @@ let
   args = {
     name = "nix-profile-action";
     packageName = "nix-profile-action";
-    version = "1.0.0";
+    version = "2.0.0";
     src = ./..;
     dependencies = [
       sources."@actions/core-1.10.0"
