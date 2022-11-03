@@ -90,11 +90,8 @@
             runHook preCheck
 
             export NIX_CONFIG="experimental-features = nix-command flakes recursive-nix";
-          '' + (if pkgs.stdenv.isDarwin then ''
             npm run test-no-recursive-nix
-          '' else ''
-            npm run test
-          '') + ''
+
             runHook postCheck
           '';
 
