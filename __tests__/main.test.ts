@@ -1,19 +1,25 @@
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
-import { rmRF } from "@actions/io";
+import * as io from "@actions/io";
 import path from "path";
-import { mocked } from "jest-mock";
 
 import main from "../src/main";
+import post from "../src/post";
 import * as nix from "../src/nix";
 
 jest.mock("@actions/core");
 jest.mock("@actions/exec");
 jest.mock("../src/nix");
 
-afterEach(() => {
+beforeEach(() => {
   jest.clearAllMocks();
   jest.resetAllMocks();
+
+  process.env.STATE_NIX_PROFILE_TMPDIR = "";
+
+  jest.spyOn(core, "exportVariable").mockImplementation((name, val) => {
+    process.env[name] = val;
+  });
 });
 
 test("fails with no inputs", async () => {
@@ -219,10 +225,16 @@ test("installs packages and expr into profile with inputs-from", async () => {
 });
 
 async function getAndDeleteCreatedProfileDir(): Promise<string> {
-  expect(mocked(core.exportVariable).mock.calls[0][0]).toEqual(
-    "STATE_NIX_PROFILE_TMPDIR"
-  );
-  const tmpDir = mocked(core.exportVariable).mock.calls[0][1];
-  await rmRF(tmpDir);
-  return path.join(tmpDir, ".nix-profile");
+  const tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
+  expect(tmpDir).toBeDefined();
+
+  jest.spyOn(io, "rmRF");
+
+  await post();
+
+  expect(io.rmRF).toBeCalledTimes(1);
+  expect(io.rmRF).toBeCalledWith(tmpDir);
+  expect(process.env.STATE_NIX_PROFILE_TMPDIR).toBe("");
+
+  return path.join(tmpDir as string, ".nix-profile");
 }
