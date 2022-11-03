@@ -17,9 +17,16 @@ allow garbage collection of all installed derivations.
 
 ## Usage
 
+The action supports installing derivations from Flake packages and by evaluating a given expression.
+Installation happens through `nix profile`.
+
+You may call this action multiple times within the same job. Following steps will reuse the profile.
+The path of the profile is also available with the step output `nix_profile_path`.
+
+### Packages
+
 Install `packages` by giving a comma-separated string of packages from a flake.
-If no flake reference is given, `nixpkgs` from the checked out repository's flake
-is assumed. Example:
+If no flake reference is given, `nixpkgs` is assumed. Example:
 
 ```yaml
 name: 'nix-profile-action packages'
@@ -40,11 +47,24 @@ jobs:
 
 ```
 
+When installing flakes which reference a registry entry, the action resolves them as follows:
+
+- If the input `inputs-from` is given, the action invokes `nix profile install --inputs-from`.
+   As a result, `nixpkgs#hello` will look up `nixpkgs` using the inputs of the flake given in
+   `inputs-from`. 
+- `inputs-from` defaults to `.`, i.e., the current working directory of the process. If this
+   directory (or a parent) contains a valid flake, `nix profile install` is invoked with this
+   flake.
+- If `inputs-from` is unset (i.e., `""`), `nix profile` resolves tokens using the registry.
+
+### Expressions
+
 On some occasions, you need to compose a custom derivation from a Nix expression, for example,
 to install Python 3 with specific packages. This can be done with the `expr` input.
 The action evaluates the passed string through `nix profile install --expr`.
-Within your expression, `nixpkgs` from the checked out repository's flake is available as `pkgs`,
-while the repository's flake itself is available as `repoFlake`. Example:
+Within your expression, the actions provides an imported `nixpkgs` as `pkgs` using the same
+resolution strategy as outlined for the `packages` input.
+In the following example, `pkgs` references `inputs.nixpkgs` from the flake `github:yaxitech/ragenix`:
 
 ```yaml
 name: 'nix-profile-action expr'
@@ -59,9 +79,13 @@ jobs:
       - uses: yaxitech/nix-profile-action@v2
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
+          inputs-from: 'github:yaxitech/ragenix'
       - run: |
           python3 ...
 ```
+
+Within your expression, the action also introduces `let` bindings for a flake in the current
+working directory (`repoFlake`) and for the flake referenced by `inputs-from` (`inputsFromFlake`).
 
 ## Prerequisites
 

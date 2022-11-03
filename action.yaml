@@ -7,6 +7,10 @@ inputs:
   expr:
     description: 'Install the given Nix expression into the profile.'
     required: false
+  inputs-from:
+    description: 'Use inputs of the given flake as registry entries'
+    default: "."
+    required: false
 outputs:
   nix_profile_path:
     description: 'Path to the Nix profile the requested packages were installed to'
