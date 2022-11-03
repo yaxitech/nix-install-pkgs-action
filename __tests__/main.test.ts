@@ -1,18 +1,25 @@
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
-import { rmRF } from "@actions/io";
-import * as fs from "fs";
-import * as path from "path";
-import { mocked } from "jest-mock";
+import * as io from "@actions/io";
+import path from "path";
 
 import main from "../src/main";
+import post from "../src/post";
+import * as nix from "../src/nix";
 
 jest.mock("@actions/core");
 jest.mock("@actions/exec");
+jest.mock("../src/nix");
 
-afterEach(() => {
+beforeEach(() => {
   jest.clearAllMocks();
   jest.resetAllMocks();
+
+  process.env.STATE_NIX_PROFILE_TMPDIR = "";
+
+  jest.spyOn(core, "exportVariable").mockImplementation((name, val) => {
+    process.env[name] = val;
+  });
 });
 
 test("fails with no inputs", async () => {
@@ -25,81 +32,26 @@ test("fails with no inputs", async () => {
   );
 });
 
-test("fails for invalid flake reference", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
-    switch (name) {
-      case "packages":
-        return "wurzel:pfropf";
-      default:
-        throw Error("Should not reach here");
-    }
-  });
-
-  jest
-    .spyOn(exec, "getExecOutput")
-    .mockImplementation((commandLine, args?: string[], options?) => {
-      const res = {
-        exitCode: 1,
-        stderr: `error: input 'wurzel:pfropf' is unsupported`,
-      } as exec.ExecOutput;
-      return Promise.resolve(res);
-    });
-
-  await expect(main()).rejects.toThrow(
-    `Given flake reference "wurzel:pfropf" is invalid: error: input 'wurzel:pfropf' is unsupported`
-  );
-});
-
 test("installs packages into profile", async () => {
   jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
     switch (name) {
       case "packages":
-        return "package1,nixpkgs#package2,github:yaxitech/ragenix";
+        return "nixpkgs#package1,nixpkgs#package2,github:yaxitech/ragenix";
       default:
         return "";
     }
   });
 
-  jest
-    .spyOn(exec, "getExecOutput")
-    .mockImplementation((commandLine, args?: string[], options?) => {
-      const res = {
-        exitCode: 0,
-        stderr: "",
-        stdout: "",
-      } as exec.ExecOutput;
+  jest.spyOn(nix, "maybeAddNixpkgs").mockImplementation(async (pkg) => pkg);
 
-      if (args == undefined) {
-        throw Error(`Expected arguments`);
-      }
-
-      switch (args[0]) {
-        case "flake":
-          const flakeRef = args.slice(-1)[0];
-          switch (flakeRef) {
-            case "package1":
-              res.exitCode = 1;
-              res.stderr = `error: cannot find flake 'flake:${flakeRef}' in the flake registries`;
-              break;
-            default:
-              break;
-          }
-        case "profile":
-          break;
-        default:
-          throw Error(
-            `Should not reach here: ${commandLine} ${args?.join(" ")}`
-          );
-      }
-
-      return Promise.resolve(res);
-    });
+  jest.spyOn(nix, "runNix").mockImplementation(async (args, options?) => {
+    return Promise.resolve({} as exec.ExecOutput);
+  });
 
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(exec.getExecOutput).toBeCalledWith(
-    "nix",
+  expect(nix.runNix).toBeCalledWith(
     [
       "profile",
       "install",
@@ -109,44 +61,50 @@ test("installs packages into profile", async () => {
       "nixpkgs#package2",
       "github:yaxitech/ragenix",
     ],
-    { silent: true }
+    { silent: false }
   );
-  expect(exec.getExecOutput).toHaveBeenCalledTimes(4);
+
+  expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(3);
+  expect(nix.runNix).toHaveBeenCalledTimes(1);
+  expect(core.setOutput).toHaveBeenCalledWith(
+    "nix_profile_path",
+    nixProfileDir
+  );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
-test("installs expr into profile", async () => {
+test("installs expr into profile without inputs-from", async () => {
   jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
     switch (name) {
       case "expr":
         return "pkgs.wurzelpfropf";
+      case "packages":
+      case "inputs-from":
       default:
         return "";
     }
   });
 
   jest
-    .spyOn(exec, "getExecOutput")
-    .mockImplementation((commandLine, args?: string[], options?) => {
-      return Promise.resolve({
-        exitCode: 0,
-        stderr: "",
-        stdout: `"i686-linux"`,
-      } as exec.ExecOutput);
-    });
+    .spyOn(nix, "determineSystem")
+    .mockImplementation(async () => "i686-linux");
 
-  process.env.GITHUB_EVENT_PATH = path.join(
-    __dirname,
-    "fixtures",
-    "push_event.json"
-  );
+  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+    expect(_path).toBe(path.resolve(process.cwd()));
+    return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+  });
+
+  jest
+    .spyOn(nix, "getNixpkgs")
+    .mockImplementation(async (inputsFromLockedUrl) => {
+      expect(inputsFromLockedUrl).toBe("");
+      return `builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef")`;
+    });
 
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  const cwd = path.resolve(process.cwd());
-  expect(exec.getExecOutput).toBeCalledWith(
-    "nix",
+  expect(nix.runNix).toBeCalledWith(
     [
       "profile",
       "install",
@@ -154,87 +112,93 @@ test("installs expr into profile", async () => {
       nixProfileDir,
       "--expr",
       `let
-         repoFlake = builtins.getFlake("git+file://${cwd}?rev=0000000000000000000000000000000000000000");
-         pkgs = (import repoFlake.inputs.nixpkgs { system = "i686-linux"; });
+         repoFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         inputsFromFlake = builtins.getFlake("");
+         nixpkgs = builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef");
+         pkgs = (import nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
     ],
-    { silent: true }
+    { silent: false }
   );
-  // `determineSystem` + `nix profile install --expr`
-  expect(exec.getExecOutput).toHaveBeenCalledTimes(2);
+  expect(nix.determineSystem).toHaveBeenCalledTimes(1);
+  expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
+  expect(nix.getNixpkgs).toHaveBeenCalledTimes(1);
+  expect(nix.runNix).toHaveBeenCalledTimes(1);
+  expect(core.setOutput).toHaveBeenCalledWith(
+    "nix_profile_path",
+    nixProfileDir
+  );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
-test("installs packages and expr into profile", async () => {
+test("installs packages and expr into profile with inputs-from", async () => {
   jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
     switch (name) {
       case "expr":
         return "pkgs.wurzelpfropf";
       case "packages":
-        return "wuffmiau";
+        return "nixpkgs#wuffmiau";
+      case "inputs-from":
+        return ".";
       default:
         throw Error("Should not reach here");
     }
   });
 
+  jest.spyOn(nix, "maybeAddNixpkgs").mockImplementation(async (pkg) => pkg);
+
+  jest.spyOn(nix, "getFlakeLockedUrl").mockImplementation(async (flakeRef) => {
+    switch (flakeRef) {
+      case ".":
+        return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+      default:
+        throw Error(`Should not reach here: ${flakeRef}`);
+    }
+  });
+
+  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+    expect(_path).toBe(path.resolve(process.cwd()));
+    return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+  });
+
+  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+    expect(_path).toBe(path.resolve(process.cwd()));
+    return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+  });
+
+  jest.spyOn(nix, "getNixpkgs").mockImplementation(async (_path) => {
+    expect(_path).toBe(
+      "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk="
+    );
+    return `(builtins.getFlake("file:///nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs`;
+  });
+
   jest
-    .spyOn(exec, "getExecOutput")
-    .mockImplementation((commandLine, args?: string[], options?) => {
-      const res = {
-        exitCode: 0,
-        stderr: "",
-        stdout: "",
-      } as exec.ExecOutput;
-
-      if (args == undefined) {
-        throw Error(`Expected arguments`);
-      }
-
-      switch (args[0]) {
-        case "eval":
-          res.stdout = `"i686-linux"`;
-          break;
-        case "flake":
-          res.exitCode = 1;
-          res.stderr = `error: cannot find flake 'flake:wuffmiau' in the flake registries`;
-        case "profile":
-          break;
-        default:
-          throw Error(
-            `Should not reach here: ${commandLine} ${args?.join(" ")}`
-          );
-      }
-
-      return Promise.resolve(res);
-    });
-
-  process.env.GITHUB_EVENT_PATH = path.join(
-    __dirname,
-    "fixtures",
-    "push_event.json"
-  );
+    .spyOn(nix, "determineSystem")
+    .mockImplementation(async () => "i686-linux");
 
   await main();
 
-  expect(exec.getExecOutput).toBeCalledWith(
-    "nix",
-    ["flake", "metadata", "wuffmiau"],
-    { ignoreReturnCode: true, silent: true }
-  );
-
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-
-  // `packages` input
-  expect(exec.getExecOutput).toBeCalledWith(
-    "nix",
-    ["profile", "install", "--profile", nixProfileDir, "nixpkgs#wuffmiau"],
-    { silent: true }
+  expect(nix.runNix).toBeCalledWith(
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--inputs-from",
+      "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
+      "nixpkgs#wuffmiau",
+    ],
+    { silent: false }
   );
 
-  // `expr` input
-  const cwd = path.resolve(process.cwd());
-  expect(exec.getExecOutput).toBeCalledWith(
-    "nix",
+  expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(1);
+  expect(nix.getFlakeLockedUrl).toHaveBeenCalledTimes(1);
+  expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
+  expect(nix.getNixpkgs).toHaveBeenCalledTimes(1);
+
+  expect(nix.runNix).toBeCalledWith(
     [
       "profile",
       "install",
@@ -242,22 +206,35 @@ test("installs packages and expr into profile", async () => {
       nixProfileDir,
       "--expr",
       `let
-         repoFlake = builtins.getFlake("git+file://${cwd}?rev=0000000000000000000000000000000000000000");
-         pkgs = (import repoFlake.inputs.nixpkgs { system = "i686-linux"; });
+         repoFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         inputsFromFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         nixpkgs = (builtins.getFlake("file:///nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs;
+         pkgs = (import nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
     ],
-    { silent: true }
+    { silent: false }
   );
-  // `determineSystem` + `nix profile install --expr`
-  expect(exec.getExecOutput).toHaveBeenCalledTimes(4);
+
+  expect(nix.runNix).toHaveBeenCalledTimes(2);
+
+  expect(core.setOutput).toHaveBeenCalledWith(
+    "nix_profile_path",
+    nixProfileDir
+  );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
 async function getAndDeleteCreatedProfileDir(): Promise<string> {
-  expect(mocked(core.exportVariable).mock.calls[0][0]).toEqual(
-    "STATE_NIX_PROFILE_TMPDIR"
-  );
-  const tmpDir = mocked(core.exportVariable).mock.calls[0][1];
-  await rmRF(tmpDir);
-  return path.join(tmpDir, ".nix-profile");
+  const tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
+  expect(tmpDir).toBeDefined();
+
+  jest.spyOn(io, "rmRF");
+
+  await post();
+
+  expect(io.rmRF).toBeCalledTimes(1);
+  expect(io.rmRF).toBeCalledWith(tmpDir);
+  expect(process.env.STATE_NIX_PROFILE_TMPDIR).toBe("");
+
+  return path.join(tmpDir as string, ".nix-profile");
 }

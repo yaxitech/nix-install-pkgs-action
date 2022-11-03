@@ -70,29 +70,38 @@
           NODE_OPTIONS = "--openssl-legacy-provider";
 
           buildPhase = ''
+            runHook preBuild
+
             HOME=.
 
             ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules
 
             npm run build
+
+            runHook postBuild
           '';
 
           # recursive-nix is broken on Darwin
           requiredSystemFeatures = lib.optionals (!pkgs.stdenv.isDarwin) [ "recursive-nix" ];
 
           doCheck = true;
-          checkInputs = [ pkgs.nixVersions.stable ];
+          checkInputs = optionals (!pkgs.stdenv.isDarwin) [ pkgs.nixVersions.stable ];
           checkPhase = ''
+            runHook preCheck
+
             export NIX_CONFIG="experimental-features = nix-command flakes recursive-nix";
-          '' + (if pkgs.stdenv.isDarwin then ''
             npm run test-no-recursive-nix
-          '' else ''
-            npm run test
-          '');
+
+            runHook postCheck
+          '';
 
           installPhase = ''
+            runHook preInstall
+
             mkdir -p     $out/lib/
             cp -r dist/. $out/lib/
+
+            runHook postInstall
           '';
         };
 
