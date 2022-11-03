@@ -95,6 +95,19 @@ jobs:
         run: |
           ragenix --help
 
+      - name: Run Action (package with inputs-from)
+        uses: ./
+        id: 'inputs-from-jq'
+        with:
+          packages: 'jq'
+          inputs-from: 'github:yaxitech/ragenix'
+
+      - name: Verify `nixpkgs` from `github:yaxitech/ragenix`
+        run: |
+          nix profile list --profile '${{ steps.inputs-from-jq.outputs.nix_profile_path }}'
+          rev=$(nix flake metadata --json "github:yaxitech/ragenix" | jq -r .locks.nodes.nixpkgs.locked.rev)
+          nix profile list --profile '${{ steps.inputs-from-jq.outputs.nix_profile_path }}' | grep "jq" | grep -q "$rev"
+
       - name: List installed packages
         run:
           nix profile list --profile "$STATE_NIX_PROFILE_TMPDIR"/.nix-profile

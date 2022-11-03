@@ -60,6 +60,10 @@ test("installs packages into profile", async () => {
 
   expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(3);
   expect(nix.runNix).toHaveBeenCalledTimes(1);
+  expect(core.setOutput).toHaveBeenCalledWith(
+    "nix_profile_path",
+    nixProfileDir
+  );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
@@ -114,6 +118,10 @@ test("installs expr into profile without inputs-from", async () => {
   expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
   expect(nix.getNixpkgs).toHaveBeenCalledTimes(1);
   expect(nix.runNix).toHaveBeenCalledTimes(1);
+  expect(core.setOutput).toHaveBeenCalledWith(
+    "nix_profile_path",
+    nixProfileDir
+  );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
@@ -202,6 +210,12 @@ test("installs packages and expr into profile with inputs-from", async () => {
   );
 
   expect(nix.runNix).toHaveBeenCalledTimes(2);
+
+  expect(core.setOutput).toHaveBeenCalledWith(
+    "nix_profile_path",
+    nixProfileDir
+  );
+  expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
 async function getAndDeleteCreatedProfileDir(): Promise<string> {

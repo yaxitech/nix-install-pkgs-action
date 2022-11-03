@@ -92,6 +92,8 @@ export default async function main() {
 
   core.addPath(path.join(nixProfileDir, "bin"));
 
+  core.setOutput("nix_profile_path", nixProfileDir);
+
   // Export the directory to remove it in the post action of the workflow
   core.exportVariable("STATE_NIX_PROFILE_TMPDIR", stateDir);
 }
