@@ -6,6 +6,7 @@ async function post() {
   if (nixProfileTmpDir) {
     console.log("Deleting " + nixProfileTmpDir);
     await rmRF(nixProfileTmpDir);
+    core.exportVariable("STATE_NIX_PROFILE_TMPDIR", "");
   }
 }
 
