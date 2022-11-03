@@ -45,15 +45,18 @@ test("installs packages into profile", async () => {
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(nix.runNix).toBeCalledWith([
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "nixpkgs#package1",
-    "nixpkgs#package2",
-    "github:yaxitech/ragenix",
-  ]);
+  expect(nix.runNix).toBeCalledWith(
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "nixpkgs#package1",
+      "nixpkgs#package2",
+      "github:yaxitech/ragenix",
+    ],
+    { silent: false }
+  );
 
   expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(3);
   expect(nix.runNix).toHaveBeenCalledTimes(1);
@@ -91,19 +94,22 @@ test("installs expr into profile without inputs-from", async () => {
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(nix.runNix).toBeCalledWith([
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "--expr",
-    `let
+  expect(nix.runNix).toBeCalledWith(
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--expr",
+      `let
          repoFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
          inputsFromFlake = builtins.getFlake("");
          nixpkgs = builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef");
          pkgs = (import nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
-  ]);
+    ],
+    { silent: false }
+  );
   expect(nix.determineSystem).toHaveBeenCalledTimes(1);
   expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
   expect(nix.getNixpkgs).toHaveBeenCalledTimes(1);
@@ -160,34 +166,40 @@ test("installs packages and expr into profile with inputs-from", async () => {
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(nix.runNix).toBeCalledWith([
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "--inputs-from",
-    "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
-    "nixpkgs#wuffmiau",
-  ]);
+  expect(nix.runNix).toBeCalledWith(
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--inputs-from",
+      "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
+      "nixpkgs#wuffmiau",
+    ],
+    { silent: false }
+  );
 
   expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(1);
   expect(nix.getFlakeLockedUrl).toHaveBeenCalledTimes(1);
   expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
   expect(nix.getNixpkgs).toHaveBeenCalledTimes(1);
 
-  expect(nix.runNix).toBeCalledWith([
-    "profile",
-    "install",
-    "--profile",
-    nixProfileDir,
-    "--expr",
-    `let
+  expect(nix.runNix).toBeCalledWith(
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--expr",
+      `let
          repoFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
          inputsFromFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
          nixpkgs = (builtins.getFlake("file:///nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs;
          pkgs = (import nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
-  ]);
+    ],
+    { silent: false }
+  );
 
   expect(nix.runNix).toHaveBeenCalledTimes(2);
 });

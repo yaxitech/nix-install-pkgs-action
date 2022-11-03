@@ -23,14 +23,17 @@ async function installPackages(
       ? ["--inputs-from", inputsFromLockedUrl]
       : [];
 
-    await nix.runNix([
-      "profile",
-      "install",
-      "--profile",
-      nixProfileDir,
-      ...inputsFromArgs,
-      ...augumentedPackages,
-    ]);
+    await nix.runNix(
+      [
+        "profile",
+        "install",
+        "--profile",
+        nixProfileDir,
+        ...inputsFromArgs,
+        ...augumentedPackages,
+      ],
+      { silent: false }
+    );
   }
 }
 
@@ -39,19 +42,22 @@ async function installExpr(nixProfileDir: string, inputsFromLockedUrl: string) {
   if (expr) {
     const system = await nix.determineSystem();
     const repoFlake = await nix.getRepoLockedUrl(process.cwd());
-    await nix.runNix([
-      "profile",
-      "install",
-      "--profile",
-      nixProfileDir,
-      "--expr",
-      `let
+    await nix.runNix(
+      [
+        "profile",
+        "install",
+        "--profile",
+        nixProfileDir,
+        "--expr",
+        `let
          repoFlake = builtins.getFlake("${repoFlake}");
          inputsFromFlake = builtins.getFlake("${inputsFromLockedUrl}");
          nixpkgs = ${await nix.getNixpkgs(inputsFromLockedUrl)};
          pkgs = (import nixpkgs { system = "${system}"; });
        in ${expr}`,
-    ]);
+      ],
+      { silent: false }
+    );
   }
 }
 
