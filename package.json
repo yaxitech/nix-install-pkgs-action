@@ -1,8 +1,8 @@
 {
-  "name": "nix-profile-action",
+  "name": "nix-install-pkgs-action",
   "private": true,
-  "version": "2.0.0",
-  "description": "A GitHub Action to install an ephemeral Nix profile",
+  "version": "3.0.0",
+  "description": "Install flake packages using an ephemeral Nix profile",
   "main": "index.js",
   "scripts": {
     "build": "tsc && ncc build -o dist/main lib/main.js && ncc build -o dist/post lib/post.js",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yaxitech/nix-profile-action"
+    "url": "git+https://github.com/yaxitech/nix-install-pkgs-action"
   },
   "keywords": [
     "actions",
