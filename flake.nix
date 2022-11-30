@@ -31,15 +31,11 @@
           mkdir $out #sucess
         '';
 
-        checks.prettier =
-          let
-            checkFormatCommand = packageJson.scripts.check-format;
-          in
-          pkgs.runCommand "check-ts-format" { buildInputs = with pkgs.nodePackages; [ prettier ]; } ''
-            cd ${self}
-            ${checkFormatCommand}
-            mkdir $out # success
-          '';
+        checks.prettier = self.packages.${system}.default.overrideAttrs (oldAttrs: {
+          name = "${oldAttrs.name}-prettier";
+          doCheck = false;
+          npmBuildScript = "check-format";
+        });
 
         checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
           flakeDescription=${escapeShellArg (import "${self}/flake.nix").description}
