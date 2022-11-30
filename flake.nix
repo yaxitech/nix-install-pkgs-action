@@ -11,7 +11,6 @@
         pkgs = nixpkgs.legacyPackages.${system};
         packageJson = lib.importJSON "${self}/package.json";
         nodejs = pkgs.nodejs-16_x;
-        nodeEnv = pkgs.callPackage "${self}/node-env" { inherit nodejs; };
         pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
       in
       with lib;
@@ -32,16 +31,11 @@
           mkdir $out #sucess
         '';
 
-        checks.prettier =
-          let
-            checkFormatCommand = packageJson.scripts.check-format;
-            buildInputs = self.packages.${system}.default.buildInputs;
-          in
-          pkgs.runCommand "check-ts-format" { inherit buildInputs; } ''
-            cd ${self}
-            ${checkFormatCommand}
-            mkdir $out # success
-          '';
+        checks.prettier = self.packages.${system}.default.overrideAttrs (oldAttrs: {
+          name = "${oldAttrs.name}-prettier";
+          doCheck = false;
+          npmBuildScript = "check-format";
+        });
 
         checks.metadata = pkgs.runCommand "check-metadata" { buildInputs = with pkgs; [ yq ]; } ''
           flakeDescription=${escapeShellArg (import "${self}/flake.nix").description}
@@ -57,29 +51,14 @@
           echo 'All metadata checks completed successfully'
         '';
 
-        packages.default = pkgs.stdenv.mkDerivation {
+        packages.default = pkgs.buildNpmPackage {
           name = packageJson.name;
-
-          buildInputs = [
-            nodejs
-            nodeEnv.nodeDependencies
-          ];
 
           src = self;
 
+          npmDepsHash = "sha256-bEHDsmUJAfzPHbcWMRS+XrMbfCRjlaKzlba94a1r1P8=";
+
           NODE_OPTIONS = "--openssl-legacy-provider";
-
-          buildPhase = ''
-            runHook preBuild
-
-            HOME=.
-
-            ln -s ${nodeEnv.nodeDependencies}/lib/node_modules node_modules
-
-            npm run build
-
-            runHook postBuild
-          '';
 
           # recursive-nix is broken on Darwin
           requiredSystemFeatures = lib.optionals (!pkgs.stdenv.isDarwin) [ "recursive-nix" ];
@@ -106,20 +85,6 @@
         };
 
         apps = {
-          refresh-node-env = flake-utils.lib.mkApp {
-            drv = (pkgs.writeShellScriptBin "refresh-node-env" ''
-              ${pkgs.nodePackages.node2nix}/bin/node2nix \
-                --development \
-                --input package.json \
-                --lock package-lock.json \
-                --node-env node-env/node-env.nix \
-                --output node-env/node-packages.nix \
-                --composition node-env/default.nix \
-                --nodejs-16
-              ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt node-env
-            '');
-          };
-
           update-package-lock = flake-utils.lib.mkApp {
             drv = (pkgs.writeShellScriptBin "update-package-lock" ''
               ${nodejs}/bin/npm install --package-lock-only
@@ -136,12 +101,13 @@
         devShells.default = pkgs.mkShell {
           name = "${packageJson.name}-shell";
 
+          inputsFrom = [ self.packages.${system}.default ];
+
           buildInputs = with pkgs; [
             fish
-            nodeEnv.nodeDependencies
-            nodePackages.node2nix
             nodejs
             pythonEnv
+            prefetch-npm-deps
           ];
         };
       });
