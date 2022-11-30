@@ -24,16 +24,6 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes recursive-nix
 
-      - name: Check that node-env is up-to-date
-        run: |
-          nix run '.#update-package-lock'
-          nix run '.#refresh-node-env'
-          [[ -z $(git status -s) ]] || ( \
-            echo "Changed package.json or package-lock.json.";
-            echo "Please run 'nix run .#update-package-lock' and 'nix run .#refresh-node-env'."; \
-            exit 1 \
-          )
-
       - name: Run checks
         run: |
           nix flake check -L .
