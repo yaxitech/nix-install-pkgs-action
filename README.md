@@ -107,6 +107,9 @@ to install Nix with flake support.
 
 ## Development notes
 
+After you changed `package.json`, you also need to update `npmDepsHash` in `flake.nix`.
+You can acquire the hash by running: `nix develop -c prefetch-npm-deps package-lock.json`.
+
 Some of the TypeScript tests invoke `nix` during test execution. That means if
 you invoke the tests through `nix`, for example as part of `nix build`, a nix
 that has the `recursive-nix` feature enabled is required. You can put the

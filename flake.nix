@@ -107,6 +107,7 @@
             fish
             nodejs
             pythonEnv
+            prefetch-npm-deps
           ];
         };
       });
