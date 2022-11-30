@@ -89,7 +89,6 @@
         };
 
         apps = {
-
           update-package-lock = flake-utils.lib.mkApp {
             drv = (pkgs.writeShellScriptBin "update-package-lock" ''
               ${nodejs}/bin/npm install --package-lock-only
