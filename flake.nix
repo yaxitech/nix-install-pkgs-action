@@ -56,7 +56,7 @@
 
           src = self;
 
-          npmDepsHash = "sha256-bEHDsmUJAfzPHbcWMRS+XrMbfCRjlaKzlba94a1r1P8=";
+          npmDepsHash = "sha256-V2Y7CPL2KYnXcWxq0R/ua+q/lKU4VBsmHP1PehQhT1o=";
 
           NODE_OPTIONS = "--openssl-legacy-provider";
 
