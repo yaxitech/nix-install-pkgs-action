@@ -37,7 +37,7 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: yaxitech/nix-install-pkgs-action@v3
         with:
           packages: "nixpkgs#hello, figlet"
@@ -75,7 +75,7 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: yaxitech/nix-install-pkgs-action@v3
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
