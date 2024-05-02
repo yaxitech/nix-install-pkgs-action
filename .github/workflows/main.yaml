@@ -19,10 +19,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v26
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes recursive-nix
@@ -45,18 +45,18 @@ jobs:
           - 1 # shallow clone
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: ${{ matrix.fetch-depth }}
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v26
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes recursive-nix
 
       - name: 'Setup Cachix'
-        uses: cachix/cachix-action@v10
+        uses: cachix/cachix-action@v14
         with:
           name: wurzelpfropf
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN_PUBLIC }}'
@@ -122,13 +122,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # We need a full checkout for a Git diff
           fetch-depth: 0
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v26
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes recursive-nix
@@ -147,13 +147,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # We need a full checkout for the tests
           fetch-depth: 0
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v26
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes recursive-nix
