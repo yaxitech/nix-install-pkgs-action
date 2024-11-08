@@ -44,7 +44,7 @@ def main():
 
     # Files in the Nix store are read-only and the checkout action then fails
     # to clean up afterwards. Help a bit by making the copied files writable.
-    for (root, dirs, files) in os.walk("dist"):
+    for root, dirs, files in os.walk("dist"):
         for name in dirs:
             path = os.path.join(root, name)
             os.chmod(path, 0o755)
