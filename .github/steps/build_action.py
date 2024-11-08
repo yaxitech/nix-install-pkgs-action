@@ -32,7 +32,8 @@ def main():
 
     last_commit: git.Commit = repo.commit(commits[-1]["id"])
     for diff in last_commit.diff(commits[0]["id"] + "~"):
-        if (diff.a_path or diff.b_path).startswith("src/"):
+        path = diff.a_path or diff.b_path
+        if path.startswith("src/") or path == "package-lock.json":
             break
     else:
         print("Source wasn't changed, nothing to do")
