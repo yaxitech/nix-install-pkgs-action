@@ -76,7 +76,7 @@ test("getFlakeLockedUrl works", async () => {
 test("getFlakeLockedUrl fails for invalid flake", async () => {
   jest.spyOn(nix, "getFlakeLockedUrl");
 
-  await expect(() => nix.getFlakeLockedUrl("")).rejects.toThrow(
+  await expect(() => nix.getFlakeLockedUrl("doesnotexist")).rejects.toThrow(
     /The process '\/.*?\/nix' failed with exit code 1/
   );
   expect(nix.getFlakeLockedUrl).toBeCalledTimes(1);
