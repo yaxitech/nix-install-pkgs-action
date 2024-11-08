@@ -95,7 +95,7 @@ function createOrGetStateDir() {
         let tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
         // Allow to execute this action multiple times with different packages
         if (!tmpDir) {
-            tmpDir = yield fs_1.promises.mkdtemp(path.join((0, os_1.tmpdir)(), "nix-profile-"));
+            tmpDir = yield fs_1.promises.mkdtemp(path.join(process.env.RUNNER_TEMP || (0, os_1.tmpdir)(), "nix-profile-"));
         }
         return tmpDir;
     });
