@@ -28,7 +28,7 @@ test("fails with no inputs", async () => {
   });
 
   await expect(main()).rejects.toThrow(
-    "Neither the `packages` nor the `expr` input is given"
+    "Neither the `packages` nor the `expr` input is given",
   );
 });
 
@@ -61,14 +61,14 @@ test("installs packages into profile", async () => {
       "nixpkgs#package2",
       "github:yaxitech/ragenix",
     ],
-    { silent: false }
+    { silent: false },
   );
 
   expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(3);
   expect(nix.runNix).toHaveBeenCalledTimes(1);
   expect(core.setOutput).toHaveBeenCalledWith(
     "nix_profile_path",
-    nixProfileDir
+    nixProfileDir,
   );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
@@ -118,7 +118,7 @@ test("installs expr into profile without inputs-from", async () => {
          pkgs = (import nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
     ],
-    { silent: false }
+    { silent: false },
   );
   expect(nix.determineSystem).toHaveBeenCalledTimes(1);
   expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
@@ -126,7 +126,7 @@ test("installs expr into profile without inputs-from", async () => {
   expect(nix.runNix).toHaveBeenCalledTimes(1);
   expect(core.setOutput).toHaveBeenCalledWith(
     "nix_profile_path",
-    nixProfileDir
+    nixProfileDir,
   );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
@@ -168,7 +168,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
 
   jest.spyOn(nix, "getNixpkgs").mockImplementation(async (_path) => {
     expect(_path).toBe(
-      "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk="
+      "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
     );
     return `(builtins.getFlake("file:///nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs`;
   });
@@ -190,7 +190,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
       "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
       "nixpkgs#wuffmiau",
     ],
-    { silent: false }
+    { silent: false },
   );
 
   expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(1);
@@ -212,14 +212,14 @@ test("installs packages and expr into profile with inputs-from", async () => {
          pkgs = (import nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
     ],
-    { silent: false }
+    { silent: false },
   );
 
   expect(nix.runNix).toHaveBeenCalledTimes(2);
 
   expect(core.setOutput).toHaveBeenCalledWith(
     "nix_profile_path",
-    nixProfileDir
+    nixProfileDir,
   );
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
