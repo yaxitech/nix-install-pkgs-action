@@ -1,7 +1,7 @@
 {
   "name": "nix-install-pkgs-action",
   "private": true,
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Install flake packages using an ephemeral Nix profile",
   "main": "index.js",
   "scripts": {
