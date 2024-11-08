@@ -65,7 +65,9 @@ async function createOrGetStateDir(): Promise<string> {
   let tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
   // Allow to execute this action multiple times with different packages
   if (!tmpDir) {
-    tmpDir = await promises.mkdtemp(path.join(tmpdir(), "nix-profile-"));
+    tmpDir = await promises.mkdtemp(
+      path.join(process.env.RUNNER_TEMP || tmpdir(), "nix-profile-"),
+    );
   }
 
   return tmpDir;
