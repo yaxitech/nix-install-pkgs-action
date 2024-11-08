@@ -1,4 +1,4 @@
-import { ExecOutput, getExecOutput } from "@actions/exec";
+import { ExecOutput } from "@actions/exec";
 import * as nix from "../src/nix";
 
 // The online tests run quite slowly on GitHub Actions
@@ -54,7 +54,7 @@ test("getRepoLockedUrl works", async () => {
 
   const res = await nix.getRepoLockedUrl(".");
   expect(res).toMatch(/^file:\/\/\/nix\/store\/.*?\?narHash\=.*$/);
-  expect(nix.getRepoLockedUrl).toBeCalledTimes(1);
+  expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getRepoLockedUrl does not fail for invalid flake", async () => {
@@ -62,7 +62,7 @@ test("getRepoLockedUrl does not fail for invalid flake", async () => {
 
   const res = await nix.getRepoLockedUrl("/");
   expect(res).toBe("");
-  expect(nix.getRepoLockedUrl).toBeCalledTimes(1);
+  expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getFlakeLockedUrl works", async () => {
@@ -70,7 +70,7 @@ test("getFlakeLockedUrl works", async () => {
 
   const res = await nix.getFlakeLockedUrl(".");
   expect(res).toMatch(/^file:\/\/\/nix\/store\/.*?\?narHash\=.*$/);
-  expect(nix.getFlakeLockedUrl).toBeCalledTimes(1);
+  expect(nix.getFlakeLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getFlakeLockedUrl fails for invalid flake", async () => {
@@ -79,7 +79,7 @@ test("getFlakeLockedUrl fails for invalid flake", async () => {
   await expect(() => nix.getFlakeLockedUrl("doesnotexist")).rejects.toThrow(
     /The process '\/.*?\/nix' failed with exit code 1/,
   );
-  expect(nix.getFlakeLockedUrl).toBeCalledTimes(1);
+  expect(nix.getFlakeLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getNixpkgs with inputs-from works", async () => {

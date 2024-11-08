@@ -23,7 +23,7 @@ beforeEach(() => {
 });
 
 test("fails with no inputs", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
+  jest.spyOn(core, "getInput").mockImplementation((_name, _options?) => {
     return "";
   });
 
@@ -33,7 +33,7 @@ test("fails with no inputs", async () => {
 });
 
 test("installs packages into profile", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
+  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
     switch (name) {
       case "packages":
         return "nixpkgs#package1,nixpkgs#package2,github:yaxitech/ragenix";
@@ -44,14 +44,14 @@ test("installs packages into profile", async () => {
 
   jest.spyOn(nix, "maybeAddNixpkgs").mockImplementation(async (pkg) => pkg);
 
-  jest.spyOn(nix, "runNix").mockImplementation(async (args, options?) => {
+  jest.spyOn(nix, "runNix").mockImplementation(async (_args, _options?) => {
     return Promise.resolve({} as exec.ExecOutput);
   });
 
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(nix.runNix).toBeCalledWith(
+  expect(nix.runNix).toHaveBeenCalledWith(
     [
       "profile",
       "install",
@@ -74,7 +74,7 @@ test("installs packages into profile", async () => {
 });
 
 test("installs expr into profile without inputs-from", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
+  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
     switch (name) {
       case "expr":
         return "pkgs.wurzelpfropf";
@@ -104,7 +104,7 @@ test("installs expr into profile without inputs-from", async () => {
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(nix.runNix).toBeCalledWith(
+  expect(nix.runNix).toHaveBeenCalledWith(
     [
       "profile",
       "install",
@@ -132,7 +132,7 @@ test("installs expr into profile without inputs-from", async () => {
 });
 
 test("installs packages and expr into profile with inputs-from", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, options?) => {
+  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
     switch (name) {
       case "expr":
         return "pkgs.wurzelpfropf";
@@ -180,7 +180,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
   await main();
 
   const nixProfileDir = await getAndDeleteCreatedProfileDir();
-  expect(nix.runNix).toBeCalledWith(
+  expect(nix.runNix).toHaveBeenCalledWith(
     [
       "profile",
       "install",
@@ -198,7 +198,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
   expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
   expect(nix.getNixpkgs).toHaveBeenCalledTimes(1);
 
-  expect(nix.runNix).toBeCalledWith(
+  expect(nix.runNix).toHaveBeenCalledWith(
     [
       "profile",
       "install",
@@ -232,8 +232,8 @@ async function getAndDeleteCreatedProfileDir(): Promise<string> {
 
   await post();
 
-  expect(io.rmRF).toBeCalledTimes(1);
-  expect(io.rmRF).toBeCalledWith(tmpDir);
+  expect(io.rmRF).toHaveBeenCalledTimes(1);
+  expect(io.rmRF).toHaveBeenCalledWith(tmpDir);
   expect(process.env.STATE_NIX_PROFILE_TMPDIR).toBe("");
 
   return path.join(tmpDir as string, ".nix-profile");
