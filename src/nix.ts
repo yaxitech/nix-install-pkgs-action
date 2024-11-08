@@ -3,7 +3,7 @@ import { getExecOutput, ExecOptions, ExecOutput } from "@actions/exec";
 
 export async function runNix(
   args: string[],
-  options?: ExecOptions
+  options?: ExecOptions,
 ): Promise<ExecOutput> {
   return getExecOutput("nix", args, { silent: !core.isDebug(), ...options });
 }
@@ -64,13 +64,13 @@ export async function getFlakeLockedUrl(flakeRef: string): Promise<string> {
 }
 
 export async function getNixpkgs(
-  inputsFromLockedUrl?: string
+  inputsFromLockedUrl?: string,
 ): Promise<string> {
   if (inputsFromLockedUrl) {
     return `(builtins.getFlake("${inputsFromLockedUrl}")).inputs.nixpkgs`;
   } else {
     return getFlakeLockedUrl("nixpkgs").then(
-      (url) => `builtins.getFlake("${url}")`
+      (url) => `builtins.getFlake("${url}")`,
     );
   }
 }

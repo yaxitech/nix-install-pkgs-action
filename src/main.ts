@@ -7,7 +7,7 @@ import * as nix from "./nix";
 
 async function installPackages(
   nixProfileDir: string,
-  inputsFromLockedUrl: string
+  inputsFromLockedUrl: string,
 ) {
   // Install given `packages`, if any
   const packages = core.getInput("packages");
@@ -16,7 +16,7 @@ async function installPackages(
       packages
         .split(",")
         .map((str) => str.trim())
-        .map(nix.maybeAddNixpkgs)
+        .map(nix.maybeAddNixpkgs),
     );
 
     const inputsFromArgs = inputsFromLockedUrl
@@ -32,7 +32,7 @@ async function installPackages(
         ...inputsFromArgs,
         ...augumentedPackages,
       ],
-      { silent: false }
+      { silent: false },
     );
   }
 }
@@ -56,7 +56,7 @@ async function installExpr(nixProfileDir: string, inputsFromLockedUrl: string) {
          pkgs = (import nixpkgs { system = "${system}"; });
        in ${expr}`,
       ],
-      { silent: false }
+      { silent: false },
     );
   }
 }
@@ -99,5 +99,5 @@ export default async function main() {
 }
 
 main().catch((error) =>
-  core.setFailed("Workflow run failed: " + error.message)
+  core.setFailed("Workflow run failed: " + error.message),
 );
