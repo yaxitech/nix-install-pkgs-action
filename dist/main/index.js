@@ -233,7 +233,7 @@ function maybeAddNixpkgs(pkg) {
 }
 function buildLockedUrl(metadata) {
     return __awaiter(this, void 0, void 0, function* () {
-        const url = new URL(`file://${metadata.path}`);
+        const url = new URL(`path:${metadata.path}`);
         url.searchParams.append("narHash", metadata.locked.narHash);
         return url.toString();
     });

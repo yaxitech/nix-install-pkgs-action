@@ -91,7 +91,7 @@ test("installs expr into profile without inputs-from", async () => {
 
   jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
     expect(_path).toBe(path.resolve(process.cwd()));
-    return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+    return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
   });
 
   jest
@@ -112,7 +112,7 @@ test("installs expr into profile without inputs-from", async () => {
       nixProfileDir,
       "--expr",
       `let
-         repoFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         repoFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
          inputsFromFlake = builtins.getFlake("");
          nixpkgs = builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef");
          pkgs = (import nixpkgs { system = "i686-linux"; });
@@ -150,7 +150,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
   jest.spyOn(nix, "getFlakeLockedUrl").mockImplementation(async (flakeRef) => {
     switch (flakeRef) {
       case ".":
-        return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+        return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
       default:
         throw Error(`Should not reach here: ${flakeRef}`);
     }
@@ -158,19 +158,19 @@ test("installs packages and expr into profile with inputs-from", async () => {
 
   jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
     expect(_path).toBe(path.resolve(process.cwd()));
-    return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+    return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
   });
 
   jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
     expect(_path).toBe(path.resolve(process.cwd()));
-    return "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+    return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
   });
 
   jest.spyOn(nix, "getNixpkgs").mockImplementation(async (_path) => {
     expect(_path).toBe(
-      "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
+      "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
     );
-    return `(builtins.getFlake("file:///nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs`;
+    return `(builtins.getFlake("path:/nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs`;
   });
 
   jest
@@ -187,7 +187,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
       "--profile",
       nixProfileDir,
       "--inputs-from",
-      "file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
+      "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
       "nixpkgs#wuffmiau",
     ],
     { silent: false },
@@ -206,9 +206,9 @@ test("installs packages and expr into profile with inputs-from", async () => {
       nixProfileDir,
       "--expr",
       `let
-         repoFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
-         inputsFromFlake = builtins.getFlake("file:///nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
-         nixpkgs = (builtins.getFlake("file:///nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs;
+         repoFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         inputsFromFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         nixpkgs = (builtins.getFlake("path:/nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs;
          pkgs = (import nixpkgs { system = "i686-linux"; });
        in pkgs.wurzelpfropf`,
     ],

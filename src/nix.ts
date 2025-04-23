@@ -39,7 +39,7 @@ export async function maybeAddNixpkgs(pkg: string): Promise<string> {
 }
 
 async function buildLockedUrl(metadata: any) {
-  const url = new URL(`file://${metadata.path}`);
+  const url = new URL(`path:${metadata.path}`);
   url.searchParams.append("narHash", metadata.locked.narHash);
   return url.toString();
 }
