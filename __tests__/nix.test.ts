@@ -53,7 +53,7 @@ test("getRepoLockedUrl works", async () => {
   jest.spyOn(nix, "getRepoLockedUrl");
 
   const res = await nix.getRepoLockedUrl(".");
-  expect(res).toMatch(/^file:\/\/\/nix\/store\/.*?\?narHash\=.*$/);
+  expect(res).toMatch(/^path:\/nix\/store\/.*?\?narHash\=.*$/);
   expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
 });
 
@@ -69,7 +69,7 @@ test("getFlakeLockedUrl works", async () => {
   jest.spyOn(nix, "getFlakeLockedUrl");
 
   const res = await nix.getFlakeLockedUrl(".");
-  expect(res).toMatch(/^file:\/\/\/nix\/store\/.*?\?narHash\=.*$/);
+  expect(res).toMatch(/^path:\/nix\/store\/.*?\?narHash\=.*$/);
   expect(nix.getFlakeLockedUrl).toHaveBeenCalledTimes(1);
 });
 
@@ -99,7 +99,7 @@ test("getNixpkgs without inputs-from works", async () => {
   expect(inputsFromLockedUrl).toBe("");
   const res = await nix.getNixpkgs(inputsFromLockedUrl);
   expect(res).toMatch(
-    /^builtins\.getFlake\(\"file:\/\/\/nix\/store\/.*?\?narHash\=.*\"\)$/,
+    /^builtins\.getFlake\(\"path:\/nix\/store\/.*?\?narHash\=.*\"\)$/,
   );
   const execRes = await nix.runNix(["eval", "--json", "--expr", res], {
     ignoreReturnCode: true,
