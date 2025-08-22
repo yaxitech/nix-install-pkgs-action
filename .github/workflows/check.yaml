@@ -12,17 +12,21 @@ jobs:
   check:
     name: Run checks.
     runs-on: ubuntu-latest
-    env:
-      GC_DONT_GC: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v26
+        uses: DeterminateSystems/nix-installer-action@main
         with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes recursive-nix
+          diagnostic-endpoint: ""
+          extra-conf: |
+            extra-experimental-features = nix-command flakes recursive-nix
+
+      - name: Nix caching
+        uses: DeterminateSystems/magic-nix-cache-action@main
+        with:
+          diagnostic-endpoint: ""
 
       - name: Run checks
         run: |

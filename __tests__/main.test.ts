@@ -73,6 +73,98 @@ test("installs packages into profile", async () => {
   expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
 });
 
+test("installs unfree packages into profile", async () => {
+  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
+    switch (name) {
+      case "packages":
+        return "nixpkgs#package1,nixpkgs#package2,github:yaxitech/ragenix";
+      case "allow-unfree":
+        return "true";
+      default:
+        return "";
+    }
+  });
+
+  jest.spyOn(nix, "maybeAddNixpkgs").mockImplementation(async (pkg) => pkg);
+
+  jest.spyOn(nix, "runNix").mockImplementation(async (_args, _options?) => {
+    return Promise.resolve({} as exec.ExecOutput);
+  });
+
+  jest
+    .spyOn(nix, "determineSystem")
+    .mockImplementation(async () => "i686-linux");
+
+  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+    expect(_path).toBe(path.resolve(process.cwd()));
+    return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
+  });
+
+  jest
+    .spyOn(nix, "getNixpkgs")
+    .mockImplementation(async (inputsFromLockedUrl) => {
+      expect(inputsFromLockedUrl).toBe("");
+      return `builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef")`;
+    });
+
+  await main();
+
+  const nixProfileDir = await getAndDeleteCreatedProfileDir();
+  expect(nix.runNix).toHaveBeenNthCalledWith(
+    1,
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--expr",
+      `let
+         repoFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         inputsFromFlake = builtins.getFlake("");
+         nixpkgs = builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef");
+         pkgs = (import nixpkgs { system = "i686-linux"; config.allowUnfree = true; });
+       in pkgs.package1`,
+    ],
+    { silent: false },
+  );
+  expect(nix.runNix).toHaveBeenNthCalledWith(
+    2,
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "--expr",
+      `let
+         repoFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
+         inputsFromFlake = builtins.getFlake("");
+         nixpkgs = builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef");
+         pkgs = (import nixpkgs { system = "i686-linux"; config.allowUnfree = true; });
+       in pkgs.package2`,
+    ],
+    { silent: false },
+  );
+  expect(nix.runNix).toHaveBeenNthCalledWith(
+    3,
+    [
+      "profile",
+      "install",
+      "--profile",
+      nixProfileDir,
+      "github:yaxitech/ragenix",
+    ],
+    { silent: false },
+  );
+
+  expect(nix.maybeAddNixpkgs).toHaveBeenCalledTimes(4);
+  expect(nix.runNix).toHaveBeenCalledTimes(3);
+  expect(core.setOutput).toHaveBeenCalledWith(
+    "nix_profile_path",
+    nixProfileDir,
+  );
+  expect(core.addPath).toHaveBeenCalledWith(path.join(nixProfileDir, "bin"));
+});
+
 test("installs expr into profile without inputs-from", async () => {
   jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
     switch (name) {
@@ -115,7 +207,7 @@ test("installs expr into profile without inputs-from", async () => {
          repoFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
          inputsFromFlake = builtins.getFlake("");
          nixpkgs = builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef");
-         pkgs = (import nixpkgs { system = "i686-linux"; });
+         pkgs = (import nixpkgs { system = "i686-linux"; config.allowUnfree = false; });
        in pkgs.wurzelpfropf`,
     ],
     { silent: false },
@@ -140,6 +232,8 @@ test("installs packages and expr into profile with inputs-from", async () => {
         return "nixpkgs#wuffmiau";
       case "inputs-from":
         return ".";
+      case "allow-unfree":
+        return "false";
       default:
         throw Error("Should not reach here");
     }
@@ -209,7 +303,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
          repoFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
          inputsFromFlake = builtins.getFlake("path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=");
          nixpkgs = (builtins.getFlake("path:/nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs;
-         pkgs = (import nixpkgs { system = "i686-linux"; });
+         pkgs = (import nixpkgs { system = "i686-linux"; config.allowUnfree = false; });
        in pkgs.wurzelpfropf`,
     ],
     { silent: false },

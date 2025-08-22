@@ -14,6 +14,10 @@ inputs:
     description: 'Use inputs of the given flake as registry entries'
     default: "."
     required: false
+  allow-unfree:
+    description: "Whether to allow evaluation of unfree nixpkgs packages"
+    default: "false"
+    required: false
 outputs:
   nix_profile_path:
     description: 'Path to the Nix profile the requested packages were installed to'
