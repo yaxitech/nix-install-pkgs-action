@@ -87,6 +87,19 @@ jobs:
 Within your expression, the action also introduces `let` bindings for a flake in the current
 working directory (`repoFlake`) and for the flake referenced by `inputs-from` (`inputsFromFlake`).
 
+### Unfree nixpkgs packages
+
+To install `nixpkgs` packages with an unfree license, either through `packages` or `expr`,
+set the input `allow-unfree` to `true`. Note that this will only allow installing unfree packages
+from `nixpkgs`. If a flake uses an unfree license you're on your own.
+
+### Dummy binaries
+
+Sometimes, a GitHub action will check whether certain binaries are in the `$PATH` environment variable
+before running the action, even if the binary will not actually be executed as part of your workflow configuration.
+To satisfy these workflows, the `dummy-bins` input accepts a list of binary names that will be installed
+as executables.
+
 ## Prerequisites
 
 This action requires a Flake-enabled Nix with support for
