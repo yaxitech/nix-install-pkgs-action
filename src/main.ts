@@ -62,6 +62,22 @@ async function installExpr(
   );
 }
 
+async function installDummyPackages(
+  binaryNames: string,
+  nixProfileDir: string,
+  inputsFromLockedUrl: string,
+) {
+  const bins = binaryNames.split(",").map((b) => b.trim());
+  for (const bin of bins) {
+    await installExpr(
+      `pkgs.writeShellScriptBin "${bin}" "echo noop"`,
+      nixProfileDir,
+      inputsFromLockedUrl,
+      false,
+    );
+  }
+}
+
 async function createOrGetStateDir(): Promise<string> {
   let tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
   // Allow to execute this action multiple times with different packages
@@ -82,10 +98,13 @@ async function getInputsFrom(): Promise<string> {
 export default async function main() {
   const packages = core.getInput("packages");
   const expr = core.getInput("expr");
+  const dummyBins = core.getInput("dummy-bins");
 
   // Fail if no input is given
-  if (!packages && !expr) {
-    throw Error("Neither the `packages` nor the `expr` input is given");
+  if (!packages && !expr && !dummyBins) {
+    throw Error(
+      "Neither the `packages`, the `expr` nor the `dummy-bins` input is given",
+    );
   }
 
   // Verify `allow-unfree` input value
@@ -142,6 +161,9 @@ export default async function main() {
   }
   if (expr) {
     await installExpr(expr, nixProfileDir, inputsFromLockedUrl, allowUnfree);
+  }
+  if (dummyBins) {
+    await installDummyPackages(dummyBins, nixProfileDir, inputsFromLockedUrl);
   }
 
   core.addPath(path.join(nixProfileDir, "bin"));

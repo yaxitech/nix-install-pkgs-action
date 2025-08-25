@@ -97,6 +97,14 @@ function installExpr(expr, nixProfileDir, inputsFromLockedUrl, allowUnfree) {
         ], { silent: false });
     });
 }
+function installDummyPackages(binaryNames, nixProfileDir, inputsFromLockedUrl) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const bins = binaryNames.split(",").map((b) => b.trim());
+        for (const bin of bins) {
+            yield installExpr(`pkgs.writeShellScriptBin "${bin}" "echo noop"`, nixProfileDir, inputsFromLockedUrl, false);
+        }
+    });
+}
 function createOrGetStateDir() {
     return __awaiter(this, void 0, void 0, function* () {
         let tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
@@ -117,9 +125,10 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const packages = core.getInput("packages");
         const expr = core.getInput("expr");
+        const dummyBins = core.getInput("dummy-bins");
         // Fail if no input is given
-        if (!packages && !expr) {
-            throw Error("Neither the `packages` nor the `expr` input is given");
+        if (!packages && !expr && !dummyBins) {
+            throw Error("Neither the `packages`, the `expr` nor the `dummy-bins` input is given");
         }
         // Verify `allow-unfree` input value
         let allowUnfree = false;
@@ -160,6 +169,9 @@ function main() {
         }
         if (expr) {
             yield installExpr(expr, nixProfileDir, inputsFromLockedUrl, allowUnfree);
+        }
+        if (dummyBins) {
+            yield installDummyPackages(dummyBins, nixProfileDir, inputsFromLockedUrl);
         }
         core.addPath(path.join(nixProfileDir, "bin"));
         core.setOutput("nix_profile_path", nixProfileDir);

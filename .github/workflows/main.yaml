@@ -134,6 +134,16 @@ jobs:
           codecovcli --version
           luajit -v
 
+      - name: Install dummy binaries
+        uses: ./
+        with:
+          dummy-bins: 'gpg, wrzlpfrpf'
+
+      - name: Run dummy binaries
+        run: |
+          gpg
+          wrzlpfrpf
+
   build:
     name: Build bundled action
     if: github.event_name == 'push'

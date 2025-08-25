@@ -18,6 +18,10 @@ inputs:
     description: "Whether to allow evaluation of unfree nixpkgs packages"
     default: "false"
     required: false
+  dummy-bins:
+    description: "Comma-separated list of dummy binary names to install"
+    default: ""
+    required: false
 outputs:
   nix_profile_path:
     description: 'Path to the Nix profile the requested packages were installed to'
