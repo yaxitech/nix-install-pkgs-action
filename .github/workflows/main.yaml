@@ -62,12 +62,6 @@ jobs:
         with:
           diagnostic-endpoint: ""
 
-      - name: 'Setup Cachix'
-        uses: cachix/cachix-action@v14
-        with:
-          name: wurzelpfropf
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN_PUBLIC }}'
-
       - name: Run Action (packages)
         uses: ./
         with:
