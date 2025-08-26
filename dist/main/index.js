@@ -138,6 +138,7 @@ function main() {
                 break;
             case "false":
                 allowUnfree = false;
+                break;
             case "":
                 allowUnfree = false;
                 break;

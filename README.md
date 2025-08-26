@@ -38,7 +38,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - uses: yaxitech/nix-install-pkgs-action@v5
+      - uses: yaxitech/nix-install-pkgs-action@v7
         with:
           packages: "nixpkgs#hello, figlet"
       - run: |
@@ -51,7 +51,7 @@ When installing flakes which reference a registry entry, the action resolves the
 
 - If the input `inputs-from` is given, the action invokes `nix profile install --inputs-from`.
    As a result, `nixpkgs#hello` will look up `nixpkgs` using the inputs of the flake given in
-   `inputs-from`. 
+   `inputs-from`.
 - `inputs-from` defaults to `.`, i.e., the current working directory of the process. If this
    directory (or a parent) contains a valid flake, `nix profile install` is invoked with this
    flake.
@@ -76,7 +76,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - uses: yaxitech/nix-install-pkgs-action@v5
+      - uses: yaxitech/nix-install-pkgs-action@v7
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
           inputs-from: 'github:yaxitech/ragenix'
