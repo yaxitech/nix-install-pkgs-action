@@ -16,7 +16,7 @@ inputs:
     required: false
   allow-unfree:
     description: "Whether to allow evaluation of unfree nixpkgs packages"
-    default: "false"
+    default: false
     required: false
   dummy-bins:
     description: "Comma-separated list of dummy binary names to install"
