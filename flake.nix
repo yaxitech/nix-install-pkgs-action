@@ -56,9 +56,7 @@
 
           src = self;
 
-          npmDepsHash = "sha256-n67caK3aRHThy2Jq0tb2HSwE3Qs4QFHtY7hz2VPaWLk=";
-
-          NODE_OPTIONS = "--openssl-legacy-provider";
+          npmDepsHash = "sha256-1ZRPrXPYlrQAG6YO1CbXH88+3ZAYO5r/qDrLMx1WOL4=";
 
           # recursive-nix is broken on Darwin
           requiredSystemFeatures = lib.optionals (!pkgs.stdenv.isDarwin) [ "recursive-nix" ];
