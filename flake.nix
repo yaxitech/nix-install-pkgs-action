@@ -10,8 +10,8 @@
         lib = nixpkgs.lib;
         pkgs = nixpkgs.legacyPackages.${system};
         packageJson = lib.importJSON "${self}/package.json";
-        nodejs = pkgs.nodejs_20;
-        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
+        nodejs = pkgs.nodejs_24;
+        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ gitpython ]);
       in
       with lib;
       {
