@@ -37,8 +37,8 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - uses: yaxitech/nix-install-pkgs-action@v7
+      - uses: actions/checkout@v7
+      - uses: yaxitech/nix-install-pkgs-action@v8
         with:
           packages: "nixpkgs#hello, figlet"
       - run: |
@@ -75,8 +75,8 @@ jobs:
   tests:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - uses: yaxitech/nix-install-pkgs-action@v7
+      - uses: actions/checkout@v7
+      - uses: yaxitech/nix-install-pkgs-action@v8
         with:
           expr: 'pkgs.python3.withPackages(ps: with ps; [toml pyyaml])'
           inputs-from: 'github:yaxitech/ragenix'

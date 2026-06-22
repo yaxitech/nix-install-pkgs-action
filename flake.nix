@@ -10,8 +10,8 @@
         lib = nixpkgs.lib;
         pkgs = nixpkgs.legacyPackages.${system};
         packageJson = lib.importJSON "${self}/package.json";
-        nodejs = pkgs.nodejs_20;
-        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ GitPython ]);
+        nodejs = pkgs.nodejs_24;
+        pythonEnv = pkgs.python3.withPackages (ps: with ps; [ black mypy ] ++ [ gitpython ]);
       in
       with lib;
       {
@@ -56,9 +56,7 @@
 
           src = self;
 
-          npmDepsHash = "sha256-n67caK3aRHThy2Jq0tb2HSwE3Qs4QFHtY7hz2VPaWLk=";
-
-          NODE_OPTIONS = "--openssl-legacy-provider";
+          npmDepsHash = "sha256-1ZRPrXPYlrQAG6YO1CbXH88+3ZAYO5r/qDrLMx1WOL4=";
 
           # recursive-nix is broken on Darwin
           requiredSystemFeatures = lib.optionals (!pkgs.stdenv.isDarwin) [ "recursive-nix" ];

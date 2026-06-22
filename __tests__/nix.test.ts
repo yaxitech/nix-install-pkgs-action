@@ -1,21 +1,30 @@
-import { ExecOutput } from "@actions/exec";
 import * as nix from "../src/nix";
 
 // The online tests run quite slowly on GitHub Actions
 jest.setTimeout(90 * 1000);
 
+// Depending on the Nix configuration (e.g., an unknown setting in nix.conf),
+// Nix may print `warning:` lines to stderr that are irrelevant to these tests.
+const stripWarnings = (stderr: string): string =>
+  stderr
+    .split("\n")
+    .filter((line) => !line.startsWith("warning:"))
+    .join("\n");
+
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-test("runNix returns Nix output", () => {
-  return expect(
-    nix.runNix(["eval", "--offline", "--expr", '"wurzelpfropf"']),
-  ).resolves.toEqual({
-    stdout: '"wurzelpfropf"\n',
-    stderr: "",
-    exitCode: 0,
-  } as ExecOutput);
+test("runNix returns Nix output", async () => {
+  const res = await nix.runNix([
+    "eval",
+    "--offline",
+    "--expr",
+    '"wurzelpfropf"',
+  ]);
+  expect(res.stdout).toBe('"wurzelpfropf"\n');
+  expect(res.exitCode).toBe(0);
+  expect(stripWarnings(res.stderr)).toBe("");
 });
 
 test("determineSystem() returns system", () => {
@@ -26,7 +35,7 @@ test("determineSystem() returns system", () => {
 
 test("maybeAddNixpkgs fails for invalid package", async () => {
   await expect(nix.maybeAddNixpkgs("wurzel:pfropf")).rejects.toThrow(
-    `Given flake reference "wurzel:pfropf" is invalid: error: input 'wurzel:pfropf' is unsupported`,
+    /Given flake reference "wurzel:pfropf" is invalid:[\s\S]*error: input 'wurzel:pfropf' is unsupported/,
   );
 });
 
