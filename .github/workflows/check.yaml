@@ -14,17 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: DeterminateSystems/nix-installer-action@v22
         with:
+          determinate: false
           diagnostic-endpoint: ""
           extra-conf: |
             extra-experimental-features = nix-command flakes recursive-nix
 
       - name: Nix caching
-        uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/magic-nix-cache-action@v14
         with:
           diagnostic-endpoint: ""
 
