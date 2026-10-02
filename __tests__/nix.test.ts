@@ -1,7 +1,8 @@
-import * as nix from "../src/nix";
+import { expect, test, vi } from "vitest";
+import * as nix from "../src/nix.js";
 
 // The online tests run quite slowly on GitHub Actions
-jest.setTimeout(90 * 1000);
+vi.setConfig({ testTimeout: 90 * 1000 });
 
 // Depending on the Nix configuration (e.g., an unknown setting in nix.conf),
 // Nix may print `warning:` lines to stderr that are irrelevant to these tests.
@@ -10,10 +11,6 @@ const stripWarnings = (stderr: string): string =>
     .split("\n")
     .filter((line) => !line.startsWith("warning:"))
     .join("\n");
-
-afterEach(() => {
-  jest.clearAllMocks();
-});
 
 test("runNix returns Nix output", async () => {
   const res = await nix.runNix([
@@ -45,50 +42,38 @@ test("maybeAddNixpkgs adds nixpkgs#", async () => {
 });
 
 test("maybeAddNixpkgs does not add nixpkgs#", async () => {
-  expect(nix.maybeAddNixpkgs("nixpkgs#wurzelpfropf")).resolves.toBe(
+  await expect(nix.maybeAddNixpkgs("nixpkgs#wurzelpfropf")).resolves.toBe(
     "nixpkgs#wurzelpfropf",
   );
-  expect(nix.maybeAddNixpkgs(".#default")).resolves.toBe(".#default");
-  expect(nix.maybeAddNixpkgs(".")).resolves.toBe(".");
+  await expect(nix.maybeAddNixpkgs(".#default")).resolves.toBe(".#default");
+  await expect(nix.maybeAddNixpkgs(".")).resolves.toBe(".");
 });
 
 test("maybeAddNixpkgs does not add nixpkgs# [online]", async () => {
-  expect(nix.maybeAddNixpkgs("github:yaxitech/ragenix")).resolves.toBe(
+  await expect(nix.maybeAddNixpkgs("github:yaxitech/ragenix")).resolves.toBe(
     "github:yaxitech/ragenix",
   );
 });
 
 test("getRepoLockedUrl works", async () => {
-  jest.spyOn(nix, "getRepoLockedUrl");
-
   const res = await nix.getRepoLockedUrl(".");
   expect(res).toMatch(/^path:\/nix\/store\/.*?\?narHash\=.*$/);
-  expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getRepoLockedUrl does not fail for invalid flake", async () => {
-  jest.spyOn(nix, "getRepoLockedUrl");
-
   const res = await nix.getRepoLockedUrl("/");
   expect(res).toBe("");
-  expect(nix.getRepoLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getFlakeLockedUrl works", async () => {
-  jest.spyOn(nix, "getFlakeLockedUrl");
-
   const res = await nix.getFlakeLockedUrl(".");
   expect(res).toMatch(/^path:\/nix\/store\/.*?\?narHash\=.*$/);
-  expect(nix.getFlakeLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getFlakeLockedUrl fails for invalid flake", async () => {
-  jest.spyOn(nix, "getFlakeLockedUrl");
-
   await expect(() => nix.getFlakeLockedUrl("doesnotexist")).rejects.toThrow(
     /The process '\/.*?\/nix' failed with exit code 1/,
   );
-  expect(nix.getFlakeLockedUrl).toHaveBeenCalledTimes(1);
 });
 
 test("getNixpkgs with inputs-from works", async () => {

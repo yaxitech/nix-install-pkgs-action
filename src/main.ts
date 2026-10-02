@@ -3,7 +3,7 @@ import { promises } from "fs";
 import { tmpdir } from "os";
 import * as path from "path";
 
-import * as nix from "./nix";
+import * as nix from "./nix.js";
 
 async function augmentPackages(packages: string): Promise<string[]> {
   return Promise.all(

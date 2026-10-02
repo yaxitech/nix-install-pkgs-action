@@ -1,29 +1,33 @@
+import { beforeEach, expect, test, vi } from "vitest";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as io from "@actions/io";
 import path from "path";
 
-import main from "../src/main";
-import post from "../src/post";
-import * as nix from "../src/nix";
+import main from "../src/main.js";
+import post from "../src/post.js";
+import * as nix from "../src/nix.js";
 
-jest.mock("@actions/core");
-jest.mock("@actions/exec");
-jest.mock("../src/nix");
+vi.mock("@actions/core");
+vi.mock("@actions/exec");
+vi.mock("@actions/io", async (importOriginal) => {
+  const io = await importOriginal<typeof import("@actions/io")>();
+  return { ...io, rmRF: vi.fn(io.rmRF) };
+});
+vi.mock("../src/nix.js");
 
 beforeEach(() => {
-  jest.clearAllMocks();
-  jest.resetAllMocks();
+  vi.resetAllMocks();
 
   process.env.STATE_NIX_PROFILE_TMPDIR = "";
 
-  jest.spyOn(core, "exportVariable").mockImplementation((name, val) => {
+  vi.mocked(core.exportVariable).mockImplementation((name, val) => {
     process.env[name] = val;
   });
 });
 
 test("fails with no inputs", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((_name, _options?) => {
+  vi.mocked(core.getInput).mockImplementation((_name, _options?) => {
     return "";
   });
 
@@ -33,7 +37,7 @@ test("fails with no inputs", async () => {
 });
 
 test("installs packages into profile", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
+  vi.mocked(core.getInput).mockImplementation((name, _options?) => {
     switch (name) {
       case "packages":
         return "nixpkgs#package1,nixpkgs#package2,github:yaxitech/ragenix";
@@ -42,9 +46,9 @@ test("installs packages into profile", async () => {
     }
   });
 
-  jest.spyOn(nix, "maybeAddNixpkgs").mockImplementation(async (pkg) => pkg);
+  vi.mocked(nix.maybeAddNixpkgs).mockImplementation(async (pkg) => pkg);
 
-  jest.spyOn(nix, "runNix").mockImplementation(async (_args, _options?) => {
+  vi.mocked(nix.runNix).mockImplementation(async (_args, _options?) => {
     return Promise.resolve({} as exec.ExecOutput);
   });
 
@@ -74,7 +78,7 @@ test("installs packages into profile", async () => {
 });
 
 test("installs unfree packages into profile", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
+  vi.mocked(core.getInput).mockImplementation((name, _options?) => {
     switch (name) {
       case "packages":
         return "nixpkgs#package1,nixpkgs#package2,github:yaxitech/ragenix";
@@ -85,27 +89,23 @@ test("installs unfree packages into profile", async () => {
     }
   });
 
-  jest.spyOn(nix, "maybeAddNixpkgs").mockImplementation(async (pkg) => pkg);
+  vi.mocked(nix.maybeAddNixpkgs).mockImplementation(async (pkg) => pkg);
 
-  jest.spyOn(nix, "runNix").mockImplementation(async (_args, _options?) => {
+  vi.mocked(nix.runNix).mockImplementation(async (_args, _options?) => {
     return Promise.resolve({} as exec.ExecOutput);
   });
 
-  jest
-    .spyOn(nix, "determineSystem")
-    .mockImplementation(async () => "i686-linux");
+  vi.mocked(nix.determineSystem).mockImplementation(async () => "i686-linux");
 
-  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+  vi.mocked(nix.getRepoLockedUrl).mockImplementation(async (_path) => {
     expect(_path).toBe(path.resolve(process.cwd()));
     return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
   });
 
-  jest
-    .spyOn(nix, "getNixpkgs")
-    .mockImplementation(async (inputsFromLockedUrl) => {
-      expect(inputsFromLockedUrl).toBe("");
-      return `builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef")`;
-    });
+  vi.mocked(nix.getNixpkgs).mockImplementation(async (inputsFromLockedUrl) => {
+    expect(inputsFromLockedUrl).toBe("");
+    return `builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef")`;
+  });
 
   await main();
 
@@ -166,7 +166,7 @@ test("installs unfree packages into profile", async () => {
 });
 
 test("installs expr into profile without inputs-from", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
+  vi.mocked(core.getInput).mockImplementation((name, _options?) => {
     switch (name) {
       case "expr":
         return "pkgs.wurzelpfropf";
@@ -177,21 +177,17 @@ test("installs expr into profile without inputs-from", async () => {
     }
   });
 
-  jest
-    .spyOn(nix, "determineSystem")
-    .mockImplementation(async () => "i686-linux");
+  vi.mocked(nix.determineSystem).mockImplementation(async () => "i686-linux");
 
-  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+  vi.mocked(nix.getRepoLockedUrl).mockImplementation(async (_path) => {
     expect(_path).toBe(path.resolve(process.cwd()));
     return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
   });
 
-  jest
-    .spyOn(nix, "getNixpkgs")
-    .mockImplementation(async (inputsFromLockedUrl) => {
-      expect(inputsFromLockedUrl).toBe("");
-      return `builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef")`;
-    });
+  vi.mocked(nix.getNixpkgs).mockImplementation(async (inputsFromLockedUrl) => {
+    expect(inputsFromLockedUrl).toBe("");
+    return `builtins.getFlake("git+https://yaxi.tech?narHash=sha256-abcdef")`;
+  });
 
   await main();
 
@@ -224,7 +220,7 @@ test("installs expr into profile without inputs-from", async () => {
 });
 
 test("installs packages and expr into profile with inputs-from", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
+  vi.mocked(core.getInput).mockImplementation((name, _options?) => {
     switch (name) {
       case "expr":
         return "pkgs.wurzelpfropf";
@@ -241,9 +237,9 @@ test("installs packages and expr into profile with inputs-from", async () => {
     }
   });
 
-  jest.spyOn(nix, "maybeAddNixpkgs").mockImplementation(async (pkg) => pkg);
+  vi.mocked(nix.maybeAddNixpkgs).mockImplementation(async (pkg) => pkg);
 
-  jest.spyOn(nix, "getFlakeLockedUrl").mockImplementation(async (flakeRef) => {
+  vi.mocked(nix.getFlakeLockedUrl).mockImplementation(async (flakeRef) => {
     switch (flakeRef) {
       case ".":
         return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
@@ -252,21 +248,19 @@ test("installs packages and expr into profile with inputs-from", async () => {
     }
   });
 
-  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+  vi.mocked(nix.getRepoLockedUrl).mockImplementation(async (_path) => {
     expect(_path).toBe(path.resolve(process.cwd()));
     return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
   });
 
-  jest.spyOn(nix, "getNixpkgs").mockImplementation(async (_path) => {
+  vi.mocked(nix.getNixpkgs).mockImplementation(async (_path) => {
     expect(_path).toBe(
       "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
     );
     return `(builtins.getFlake("path:/nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs`;
   });
 
-  jest
-    .spyOn(nix, "determineSystem")
-    .mockImplementation(async () => "i686-linux");
+  vi.mocked(nix.determineSystem).mockImplementation(async () => "i686-linux");
 
   await main();
 
@@ -316,7 +310,7 @@ test("installs packages and expr into profile with inputs-from", async () => {
 });
 
 test("installs dummy-bins", async () => {
-  jest.spyOn(core, "getInput").mockImplementation((name, _options?) => {
+  vi.mocked(core.getInput).mockImplementation((name, _options?) => {
     switch (name) {
       case "expr":
       case "packages":
@@ -332,7 +326,7 @@ test("installs dummy-bins", async () => {
     }
   });
 
-  jest.spyOn(nix, "getFlakeLockedUrl").mockImplementation(async (flakeRef) => {
+  vi.mocked(nix.getFlakeLockedUrl).mockImplementation(async (flakeRef) => {
     switch (flakeRef) {
       case ".":
         return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
@@ -341,21 +335,19 @@ test("installs dummy-bins", async () => {
     }
   });
 
-  jest.spyOn(nix, "getRepoLockedUrl").mockImplementation(async (_path) => {
+  vi.mocked(nix.getRepoLockedUrl).mockImplementation(async (_path) => {
     expect(_path).toBe(path.resolve(process.cwd()));
     return "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=";
   });
 
-  jest.spyOn(nix, "getNixpkgs").mockImplementation(async (_path) => {
+  vi.mocked(nix.getNixpkgs).mockImplementation(async (_path) => {
     expect(_path).toBe(
       "path:/nix/store/nyr21fwgx0wzf1j94hd42icc7ffvh8jr-source?narHash=sha256-I4cKCEg3yeO0G4wuA/ohOJPdM2ag1FtqnhwEdsC8PDk=",
     );
     return `(builtins.getFlake("path:/nix/store/q3ihs6gz300xg08jhvih2w7r50w7nbnn-source?narHash=sha256-KD9fHTbTnbbyG15Bprf43FwrShKfpkFk+p+hSp5wYoU=")).inputs.nixpkgs`;
   });
 
-  jest
-    .spyOn(nix, "determineSystem")
-    .mockImplementation(async () => "i686-linux");
+  vi.mocked(nix.determineSystem).mockImplementation(async () => "i686-linux");
 
   await main();
 
@@ -412,8 +404,6 @@ test("installs dummy-bins", async () => {
 async function getAndDeleteCreatedProfileDir(): Promise<string> {
   const tmpDir = process.env.STATE_NIX_PROFILE_TMPDIR;
   expect(tmpDir).toBeDefined();
-
-  jest.spyOn(io, "rmRF");
 
   await post();
 
