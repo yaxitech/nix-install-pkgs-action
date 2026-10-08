@@ -31517,16 +31517,14 @@ function maybeAddNixpkgs(pkg) {
         }
     });
 }
-function buildLockedUrl(metadata) {
-    return nix_awaiter(this, void 0, void 0, function* () {
-        const url = new URL(`path:${metadata.path}`);
-        url.searchParams.append("narHash", metadata.locked.narHash);
-        return url.toString();
-    });
+function buildLockedUrl(prefetch) {
+    const url = new URL(`path:${prefetch.storePath}`);
+    url.searchParams.append("narHash", prefetch.hash);
+    return url.toString();
 }
 function getRepoLockedUrl(path) {
     return nix_awaiter(this, void 0, void 0, function* () {
-        const res = yield runNix(["flake", "metadata", "--json", path], {
+        const res = yield runNix(["flake", "prefetch", "--json", path], {
             ignoreReturnCode: true,
         });
         switch (res.exitCode) {
@@ -31539,7 +31537,7 @@ function getRepoLockedUrl(path) {
 }
 function getFlakeLockedUrl(flakeRef) {
     return nix_awaiter(this, void 0, void 0, function* () {
-        return runNix(["flake", "metadata", "--json", flakeRef])
+        return runNix(["flake", "prefetch", "--json", flakeRef])
             .then((res) => JSON.parse(res.stdout))
             .then(buildLockedUrl);
     });
