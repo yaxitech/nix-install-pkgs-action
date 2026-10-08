@@ -38,14 +38,14 @@ export async function maybeAddNixpkgs(pkg: string): Promise<string> {
   }
 }
 
-async function buildLockedUrl(metadata: any) {
-  const url = new URL(`path:${metadata.path}`);
-  url.searchParams.append("narHash", metadata.locked.narHash);
+function buildLockedUrl(prefetch: any): string {
+  const url = new URL(`path:${prefetch.storePath}`);
+  url.searchParams.append("narHash", prefetch.hash);
   return url.toString();
 }
 
 export async function getRepoLockedUrl(path: string): Promise<string> {
-  const res = await runNix(["flake", "metadata", "--json", path], {
+  const res = await runNix(["flake", "prefetch", "--json", path], {
     ignoreReturnCode: true,
   });
 
@@ -58,7 +58,7 @@ export async function getRepoLockedUrl(path: string): Promise<string> {
 }
 
 export async function getFlakeLockedUrl(flakeRef: string): Promise<string> {
-  return runNix(["flake", "metadata", "--json", flakeRef])
+  return runNix(["flake", "prefetch", "--json", flakeRef])
     .then((res) => JSON.parse(res.stdout))
     .then(buildLockedUrl);
 }

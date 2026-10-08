@@ -1,16 +1,18 @@
 {
   "name": "nix-install-pkgs-action",
   "private": true,
-  "version": "8.0.0",
+  "type": "module",
+  "version": "8.1.0",
   "description": "Install flake packages using an ephemeral Nix profile",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && ncc build -o dist/main lib/main.js && ncc build -o dist/post lib/post.js",
-    "format": "prettier --write **/*.ts",
-    "check-format": "prettier --check **/*.ts",
-    "test": "jest --useStderr >/dev/null",
-    "test-no-recursive-nix": "jest --testPathIgnorePatterns 'nix.test' --useStderr >/dev/null",
-    "coverage": "jest --coverage"
+    "build": "tsc -p tsconfig.build.json && ncc build -o dist/main lib/main.js && ncc build -o dist/post lib/post.js",
+    "format": "prettier --write '**/*.ts'",
+    "check-format": "prettier --check '**/*.ts'",
+    "typecheck": "tsc",
+    "test": "npm run typecheck && vitest run",
+    "test-no-recursive-nix": "npm run typecheck && vitest run --exclude '**/nix.test.ts'",
+    "coverage": "npm run typecheck && vitest run --coverage"
   },
   "repository": {
     "type": "git",
@@ -24,19 +26,17 @@
   "author": "YAXI Team",
   "license": "Apache-2.0",
   "dependencies": {
-    "@actions/core": "^2.0.3",
-    "@actions/exec": "^2.0.0",
-    "@actions/github": "^8.0.1",
-    "@actions/io": "^2.0.0"
+    "@actions/core": "^3.0.1",
+    "@actions/exec": "^3.0.0",
+    "@actions/github": "^9.1.1",
+    "@actions/io": "^3.0.2"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
-    "@types/node": "^24.13.2",
-    "@vercel/ncc": "^0.44.0",
-    "jest": "^30.4.2",
-    "jest-mock": "^30.4.1",
-    "prettier": "^3.8.4",
-    "ts-jest": "^29.4.11",
-    "typescript": "^6.0.3"
+    "@types/node": "^24.19.1",
+    "@vercel/ncc": "^0.45.0",
+    "@vitest/coverage-v8": "^5.0.3",
+    "prettier": "^3.9.9",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }
